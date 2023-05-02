@@ -1,0 +1,28 @@
+- name: Audit user accounts on Linux VMs
+  hosts: linux_vms
+  gather_facts: yes
+
+  tasks:
+    - name: Get list of all user accounts
+      shell: cat /etc/passwd | cut -d ":" -f 1
+      register: user_list
+      changed_when: false
+
+    - name: Generate user account audit report
+      shell: |
+        printf "User account:\t%s\n" {{ user_list.stdout_lines }}
+        printf "UID:\t\t%s\n" $(id -u {{ item }})
+        printf "GID:\t\t%s\n" $(id -g {{ item }})
+        printf "Home directory:\t%s\n" $(getent passwd {{ item }} | cut -d ':' -f 6)
+        printf "Shell:\t\t%s\n" $(getent passwd {{ item }} | cut -d ':' -f 7)
+        printf "Account expiry:\t%s\n" $(chage -l {{ item }} | grep 'Account expires' | cut -d ':' -f 2)
+        printf "Password expiry:\t%s\n" $(chage -l {{ item }} | grep 'Password expires' | cut -d ':' -f 2)
+        printf "Last login:\t%s\n\n" $(last -n 1 -w -F {{ item }} | awk '{print $4,$5,$6,$7,$8}')
+      with_items: "{{ user_list.stdout_lines }}"
+      register: report_output
+      changed_when: false
+
+    - name: Save report to file
+      copy:
+        content: "{{ report_output.stdout_lines | join('\n') }}"
+        dest: "/tmp/user_audit_report_{{ ansible_date_time.date }}.txt"
