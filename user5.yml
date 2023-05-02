@@ -1,0 +1,13 @@
+---
+- name: List Usernames and Run chage
+  hosts: remote_host
+  gather_facts: yes
+
+  tasks:
+    - name: List Usernames
+      shell: cat /etc/passwd | cut -d: -f1
+      register: usernames
+
+    - name: Run chage
+      shell: chage -l {{ item }}
+      with_items: "{{ usernames.stdout_lines }}"
