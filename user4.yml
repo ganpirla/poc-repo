@@ -1,0 +1,9 @@
+- name: Get list of users
+  shell: cat /etc/passwd | cut -d: -f1
+  register: user_list_output
+
+- name: Loop over users
+  debug:
+    msg: "User name: {{ item }}"
+  with_items: "{{ user_list_output.stdout_lines }}"
+  when: item != '' and item | search(',') == None
