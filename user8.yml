@@ -9,20 +9,21 @@
       changed_when: false
 
     - name: Generate user account audit report
+      run_once: true
+      delegate_to: localhost
+      vars:
+        columns: "User Account,UID,GID,Home Directory,Shell,Account Expiry,Password Expiry,Last Login"
       shell: |
-        printf "User account:\t%s\n" {{ user_list.stdout_lines }}
-        printf "UID:\t\t%s\n" $(id -u {{ item }})
-        printf "GID:\t\t%s\n" $(id -g {{ item }})
-        printf "Home directory:\t%s\n" $(getent passwd {{ item }} | cut -d ':' -f 6)
-        printf "Shell:\t\t%s\n" $(getent passwd {{ item }} | cut -d ':' -f 7)
-        printf "Account expiry:\t%s\n" $(chage -l {{ item }} | grep 'Account expires' | cut -d ':' -f 2)
-        printf "Password expiry:\t%s\n" $(chage -l {{ item }} | grep 'Password expires' | cut -d ':' -f 2)
-        printf "Last login:\t%s\n\n" $(last -n 1 -w -F {{ item }} | awk '{print $4,$5,$6,$7,$8}')
-      with_items: "{{ user_list.stdout_lines }}"
+        echo "{{ columns }}"
+        for user in {{ user_list.stdout_lines }}; do
+          echo "$user,$(id -u $user),$(id -g $user),$(getent passwd $user | cut -d ':' -f 6),$(getent passwd $user | cut -d ':' -f 7),$(chage -l $user | grep 'Account expires' | cut -d ':' -f 2),$(chage -l $user | grep 'Password expires' | cut -d ':' -f 2),$(last -n 1 -w -F $user | awk '{print $4,$5,$6,$7,$8}')"
+        done
       register: report_output
       changed_when: false
 
     - name: Save report to file
+      run_once: true
+      delegate_to: localhost
       copy:
-        content: "{{ report_output.stdout_lines | join('\n') }}"
-        dest: "/tmp/user_audit_report_{{ ansible_date_time.date }}.txt"
+        content: "{{ report_output.stdout }}"
+        dest: "/tmp/user_audit_report_{{ ansible_date_time.date }}.csv"
