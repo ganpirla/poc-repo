@@ -1,0 +1,29 @@
+---
+- name: Audit user accounts
+  hosts: linux_vms
+  gather_facts: yes
+
+  tasks:
+    - name: Get user accounts
+      shell: cut -d: -f1 /etc/passwd | tr '\n' ' '
+      register: user_list
+      changed_when: false
+
+    - name: Split user accounts into a list
+      set_fact:
+        user_accounts: "{{ user_list.stdout | trim | split(' ') }}"
+
+    - name: Filter system accounts and root user
+      set_fact:
+        filtered_users: "{{ user_accounts | reject('search', '^root$|^[^a-z]') | list }}"
+
+    - name: Get last login date for each user
+      shell: lastlog -u "{{ item }}" | awk 'NR==2{gsub(/\[|\]/,"",$1); print $1,$4}'
+      loop: "{{ filtered_users }}"
+      register: user_logins
+      changed_when: false
+
+    - name: Display user account audit report
+      debug:
+        msg: "User {{ item.item }} last logged in on {{ item.stdout }}"
+      loop: "{{ user_logins.results }}"
