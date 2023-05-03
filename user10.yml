@@ -1,48 +1,7 @@
-- name: Generate user account audit report in HTML format
-  template:
-    src: user-account-list-details.html.j2
-    dest: /tmp/user-account-list-details.html
-  delegate_to: localhost
-
-
-====
-
-
-<html>
-<head>
-  <title>User Account Audit Report</title>
-</head>
-<body>
-  <h1>User Account Audit Report</h1>
-  <table>
-    <tr>
-      <th>User account</th>
-      <th>Groups user is member of</th>
-      <th>Last login</th>
-      <th>Password expiry</th>
-      <th>Last password change</th>
-    </tr>
-    {% for user in user_list.stdout_lines %}
-    <tr>
-      <td>{{ user }}</td>
-      <td>{{ shell("groups " + user) }}</td>
-      <td>{{ shell("lastlog -u " + user + " |tail -n 1 | cut -c 44-") }}</td>
-      <td>{{ shell("chage -l " + user + " | grep 'Password expires' | cut -d ':' -f 2") }}</td>
-      <td>{{ shell("chage -l " + user + " | grep 'Last password change' | cut -d ':' -f 2") }}</td>
-    </tr>
-    {% endfor %}
-  </table>
-</body>
-</html>
-
-
-======
-
-
 import subprocess
 
-def shell(command):
-    return subprocess.check_output(command, shell=True).decode('utf-8').strip()
+def shell(command, cwd=None):
+    return subprocess.check_output(command, shell=True, cwd=cwd).decode('utf-8').strip()
 
 class FilterModule(object):
     def filters(self):
@@ -51,7 +10,8 @@ class FilterModule(object):
         }
 
 
-=============
+
+=====
 
 <html>
 <head>
@@ -70,12 +30,16 @@ class FilterModule(object):
     {% for user in user_list.stdout_lines %}
     <tr>
       <td>{{ user }}</td>
-      <td>{{ user | shell("groups") }}</td>
-      <td>{{ user | shell("lastlog -u " + user + " |tail -n 1 | cut -c 44-") }}</td>
-      <td>{{ user | shell("chage -l " + user + " | grep 'Password expires' | cut -d ':' -f 2") }}</td>
-      <td>{{ user | shell("chage -l " + user + " | grep 'Last password change' | cut -d ':' -f 2") }}</td>
+      <td>{{ user | shell('groups') }}</td>
+      <td>{{ user | shell('lastlog -u ' + user + ' | tail -n 1 | cut -c 44-', '/etc') }}</td>
+      <td>{{ user | shell('chage -l ' + user + " | awk -F ': ' '/^Password expires/ { print $2 }'", '/etc') }}</td>
+      <td>{{ user | shell('chage -l ' + user + " | awk -F ': ' '/^Last password change/ { print $2 }'", '/etc') }}</td>
     </tr>
     {% endfor %}
   </table>
 </body>
 </html>
+
+
+
+======
