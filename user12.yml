@@ -66,3 +66,4 @@
 {{ "%-20s %-35s %-20s %-25s %s" % (user, groups[user], lastlog[user], chage_password_expiry[user], chage_last_password_change[user]) }}
 {% endfor %}
 
+sudo grep '^%.*ALL=(ALL).*' /etc/sudoers | awk '{print $1}' | sed 's/%//g'
