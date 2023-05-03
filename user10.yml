@@ -34,3 +34,18 @@
   </table>
 </body>
 </html>
+
+
+======
+
+
+import subprocess
+
+def shell(command):
+    return subprocess.check_output(command, shell=True).decode('utf-8').strip()
+
+class FilterModule(object):
+    def filters(self):
+        return {
+            'shell': shell
+        }
