@@ -38,11 +38,9 @@
       debug:
         var: user_audit_report_output.stdout_lines
 
-    - name: Append audit report to file
-      copy:
-        content: |
-          {{ inventory_hostname }} Audit report for user accounts on OCI Linux Compute instances:
-          {{ user_audit_report_output.stdout }}
+    - name: Write audit report to file
+      template:
+        src: user-account-list-details.txt.j2
         dest: /tmp/user-account-list-details.txt
       delegate_to: localhost
 
@@ -54,3 +52,14 @@
     - name: Debug output of file contents
       debug:
         var: file_output.stdout
+
+
+
+========
+
+
+{{ inventory_hostname }} Audit report for user accounts on OCI Linux Compute instances:
+
+{% for line in user_audit_report_output.stdout_lines %}
+{{ line }}
+{% endfor %}
