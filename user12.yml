@@ -1,0 +1,57 @@
+- name: Audit user accounts on OCI Linux Compute instances
+  hosts: all
+  gather_facts: yes
+
+  tasks:
+    - name: Get list of all user accounts
+      shell: cat /etc/passwd | cut -d ":" -f 1
+      register: user_list
+      changed_when: false
+
+    - name: Delete user account details file if it exists
+      file:
+        path: /tmp/user-account-list-details.txt
+        state: absent
+      delegate_to: localhost
+
+    - name: Create user account details file if it doesn't exist
+      file:
+        path: /tmp/user-account-list-details.txt
+        state: touch
+      delegate_to: localhost
+      when: not ansible_check_mode
+
+    - name: Generate user account audit report
+      shell: |
+        declare -A groups lastlog chage_password_expiry chage_last_password_change
+
+        while IFS=: read -r username _ uid gid gecos home shell; do
+          groups[$username]=$(groups $username)
+          lastlog[$username]=$(lastlog -u $username | awk 'NR==2{print $4 " " $5 " " $6}')
+          chage_output=$(chage -l $username)
+          chage_password_expiry[$username]=$(echo "$chage_output" | grep 'Password expires' | cut -d ':' -f 2)
+          chage_last_password_change[$username]=$(echo "$chage_output" | grep 'Last password change' | cut -d ':' -f 2)
+        done < /etc/passwd
+
+        for user in ${!groups[@]}; do
+          printf "User account: %s\n" "$user"
+          printf "Groups user is member of: %s\n" "${groups[$user]}"
+          printf "Last login: %s\n" "${lastlog[$user]}"
+          printf "Password expiry: %s\n" "${chage_password_expiry[$user]}"
+          printf "Last password change: %s\n\n" "${chage_last_password_change[$user]}"
+        done
+      register: user_audit_report_output
+      changed_when: false
+
+    - name: Append audit report to file on control node
+      lineinfile:
+        path: /tmp/user-account-list-details.txt
+        line: |
+          {{ inventory_hostname }} Audit report for user accounts on OCI Linux Compute instances:
+
+          User account          Groups user is member of          Last login          Password expiry          Last password change
+          {% for user in user_list.stdout_lines %}
+          {{ "%-20s %-35s %-20s %-25s %s" % (user, groups[user], lastlog[user], chage_password_expiry[user], chage_last_password_change[user]) }}
+          {% endfor %}
+        insertafter: EOF
+      delegate_to: localhost
