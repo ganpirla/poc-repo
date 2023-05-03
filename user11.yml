@@ -34,7 +34,7 @@
       register: user_audit_report_output
       changed_when: false
 
-    - name: Display audit report
+    - name: Debug output of audit report
       debug:
         var: user_audit_report_output.stdout_lines
 
@@ -45,3 +45,12 @@
           {{ user_audit_report_output.stdout }}
         dest: /tmp/user-account-list-details.txt
       delegate_to: localhost
+
+    - name: Debug output of file
+      shell: cat /tmp/user-account-list-details.txt
+      register: file_output
+      changed_when: false
+
+    - name: Debug output of file contents
+      debug:
+        var: file_output.stdout
