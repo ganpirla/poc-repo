@@ -8,38 +8,28 @@
       register: user_list
       changed_when: false
 
-    - name: Delete user account details file if it exists
-      file:
-        path: /tmp/user-account-list-details.txt
-        state: absent
-      delegate_to: localhost
-
-    - name: Create user account details file if it doesn't exist
-      file:
-        path: /tmp/user-account-list-details.txt
-        state: touch
-      delegate_to: localhost
-      when: not ansible_check_mode
-
     - name: Generate user account audit report
       template:
-        src: user_account_audit_report.j2
+        src: user_audit_report.j2
         dest: /tmp/user-account-list-details.txt
       delegate_to: localhost
+      vars:
+        user_list: "{{ user_list.stdout_lines }}"
+        groups: "{{ hostvars[inventory_hostname]['ansible_facts']['ansible_local']['groups'] }}"
+        command: "{{ ansible_playbook_python }} -m shell"
+
+    - name: Print user account audit report to console
+      command: cat /tmp/user-account-list-details.txt
 
 
 
-=======
+======
 
 
 {{ inventory_hostname }} Audit report for user accounts on OCI Linux Compute instances:
 
 | User account | Groups user is member of | Last login | Password expiry | Last password change |
 |--------------|-------------------------|------------|-----------------|----------------------|
-{% for user in user_list.stdout_lines %}
-| {{ user }} | {{ groups[user] }} | {{ command["lastlog -u " ~ user ~ " | tail -n 1 | cut -c 44-"] }} | {{ command["chage -l " ~ user ~ " | grep 'Password expires' | cut -d ':' -f 2"] }} | {{ command["chage -l " ~ user ~ " | grep 'Last password change' | cut -d ':' -f 2"] }} |
+{% for user in user_list %}
+| {{ user }} | {% if groups[user] is defined %}{{ groups[user] }}{% endif %} | {{ command["lastlog -u " ~ user ~ " | tail -n 1 | cut -c 44-"] }} | {{ command["chage -l " ~ user ~ " | grep 'Password expires' | cut -d ':' -f 2"] }} | {{ command["chage -l " ~ user ~ " | grep 'Last password change' | cut -d ':' -f 2"] }} |
 {% endfor %}
-
-
-
-======
