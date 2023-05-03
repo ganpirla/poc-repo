@@ -1,0 +1,36 @@
+- name: Generate user account audit report in HTML format
+  template:
+    src: user-account-list-details.html.j2
+    dest: /tmp/user-account-list-details.html
+  delegate_to: localhost
+
+
+====
+
+
+<html>
+<head>
+  <title>User Account Audit Report</title>
+</head>
+<body>
+  <h1>User Account Audit Report</h1>
+  <table>
+    <tr>
+      <th>User account</th>
+      <th>Groups user is member of</th>
+      <th>Last login</th>
+      <th>Password expiry</th>
+      <th>Last password change</th>
+    </tr>
+    {% for user in user_list.stdout_lines %}
+    <tr>
+      <td>{{ user }}</td>
+      <td>{{ shell("groups " + user) }}</td>
+      <td>{{ shell("lastlog -u " + user + " |tail -n 1 | cut -c 44-") }}</td>
+      <td>{{ shell("chage -l " + user + " | grep 'Password expires' | cut -d ':' -f 2") }}</td>
+      <td>{{ shell("chage -l " + user + " | grep 'Last password change' | cut -d ':' -f 2") }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>
