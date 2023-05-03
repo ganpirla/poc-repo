@@ -18,13 +18,16 @@
       changed_when: false
 
     - name: Collect AllowGroups details
-      shell: "grep -E '^AllowGroups' /etc/ssh/sshd_config"
+      shell: "grep -E '^AllowGroups' /etc/ssh/sshd_config || true"
       register: allow_groups
       changed_when: false
+      ignore_errors: yes
 
-    - name: Print configuration details
-      debug:
-        var: item.stdout
+    - name: Append configuration details to file
+      copy:
+        dest: /path/to/output.txt
+        content: "{{ item.stdout_lines | join('\n') }}\n"
+        mode: '0644'
       loop:
         - "{{ sudo_rules }}"
         - "{{ permit_root_login }}"
