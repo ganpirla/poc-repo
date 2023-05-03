@@ -23,13 +23,12 @@
       changed_when: false
       ignore_errors: yes
 
+    - name: Join configuration details into a single string
+      set_fact:
+        config_string: "{{ sudo_rules.stdout_lines | join('\n') }}\n{{ permit_root_login.stdout_lines | join('\n') }}\n{{ allow_users.stdout_lines | join('\n') }}\n{{ allow_groups.stdout_lines | join('\n') }}"
+
     - name: Append configuration details to file
       copy:
         dest: /path/to/output.txt
-        content: "{{ item.stdout_lines | join('\n') }}\n"
+        content: "{{ config_string }}"
         mode: '0644'
-      loop:
-        - "{{ sudo_rules }}"
-        - "{{ permit_root_login }}"
-        - "{{ allow_users }}"
-        - "{{ allow_groups }}"
