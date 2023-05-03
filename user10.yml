@@ -1,30 +1,48 @@
-- name: Generate user account audit report
-  pip:
-    name: tabulate
-  become: true
+---
+- name: Audit user accounts on OCI Linux Compute instances
+  hosts: all
+  gather_facts: yes
 
-- name: Generate user account audit report
-  shell: |
-    echo "<h2>OCI Linux Compute Instance User Accounts Audit Report</h2>"
-    echo "<table>"
-    echo "<tr><th>Hostname</th><th>User account</th><th>Groups user is member of</th><th>Last login</th><th>Password expiry</th><th>Last password change</th></tr>"
-    for user in {{ user_list.stdout_lines | join(' ') }}; do
-      echo "<tr>"
-      echo "<td>{{ inventory_hostname }}</td>"
-      echo "<td>$user</td>"
-      echo "<td>$(groups $user)</td>"
-      echo "<td>$(lastlog -u $user |tail -n 1 | cut -c 44-)</td>"
-      echo "<td>$(chage -l $user | grep 'Password expires' | cut -d ':' -f 2)</td>"
-      echo "<td>$(chage -l $user | grep 'Last password change' | cut -d ':' -f 2)</td>"
-      echo "</tr>"
-    done
-    echo "</table>"
-  register: user_audit_report_output
-  changed_when: false
+  tasks:
+    - name: Get list of all user accounts
+      shell: cat /etc/passwd | cut -d ":" -f 1
+      register: user_list
+      changed_when: false
 
-- name: Append debug output to file on control node
-  lineinfile:
-    line: "{{ user_audit_report_output.stdout }}"
-    path: /tmp/user-account-list-details.html
-    insertafter: EOF
-  delegate_to: localhost
+    - name: Delete user account details file if it exist
+      file:
+        path: /tmp/user-account-list-details.txt
+        state: absent
+      delegate_to: localhost
+
+    - name: Create user account details  file if it doesn't exist
+      file:
+        path: /tmp/user-account-list-details.txt
+        state: touch
+      delegate_to: localhost
+      when: not ansible_check_mode
+
+
+    - name: Generate user account audit report
+      shell: |
+        for user in {{ user_list.stdout_lines | join(' ') }}; do
+          echo "User account: $user"
+          echo "Groups user is member of: $(groups $user)"
+          echo "Last login: $(lastlog -u $user |tail -n 1 | cut -c 44-)"
+          echo "Password expiry: $(chage -l $user | grep 'Password expires' | cut -d ':' -f 2)"
+          echo "Last password change: $(chage -l $user | grep 'Last password change' | cut -d ':' -f 2)"                        
+          echo ""
+          echo ""
+          
+        done
+      register: user_audit_report_output
+      changed_when: false
+
+    - name: Append debug output to file on control node
+      lineinfile:
+        line: |
+          {{ inventory_hostname }} Audit report for user accounts on OCI Linux Compute instances:
+          {{ user_audit_report_output.stdout }}
+        path: /tmp/user-account-list-details.txt
+        insertafter: EOF
+      delegate_to: localhost
