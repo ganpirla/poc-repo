@@ -34,15 +34,14 @@
       register: user_audit_report_output
       changed_when: false
 
-    - name: Append debug output to file on control node
-      lineinfile:
-        line: |
-          {{ inventory_hostname }} Audit report for user accounts on OCI Linux Compute instances:
-          {{ user_audit_report_output.stdout }}
-        path: /tmp/user-account-list-details.txt
-        insertafter: EOF
-      delegate_to: localhost
-
     - name: Display audit report
       debug:
         var: user_audit_report_output.stdout_lines
+
+    - name: Append audit report to file
+      copy:
+        content: |
+          {{ inventory_hostname }} Audit report for user accounts on OCI Linux Compute instances:
+          {{ user_audit_report_output.stdout }}
+        dest: /tmp/user-account-list-details.txt
+      delegate_to: localhost
