@@ -3,32 +3,16 @@
   hosts: all
   become: yes
   tasks:
-    - name: Collect sudo rules
-      shell: "grep -vE '^#|^$' /etc/sudoers"
-      register: sudo_rules
-
-    - name: Collect PermitRootLogin details
-      shell: "grep -E '^PermitRootLogin' /etc/ssh/sshd_config"
-      register: permit_root_login
-      changed_when: false
-
-    - name: Collect AllowUsers details
-      shell: "grep -E '^AllowUsers' /etc/ssh/sshd_config"
-      register: allow_users
-      changed_when: false
-
-    - name: Collect AllowGroups details
-      shell: "grep -E '^AllowGroups' /etc/ssh/sshd_config || true"
-      register: allow_groups
-      changed_when: false
-      ignore_errors: yes
-
-    - name: Join configuration details into a single string
-      set_fact:
-        config_string: "{{ sudo_rules.stdout_lines | join('\n') }}\n{{ permit_root_login.stdout_lines | join('\n') }}\n{{ allow_users.stdout_lines | join('\n') }}\n{{ allow_groups.stdout_lines | join('\n') }}"
+    - name: Collect configuration details
+      shell: |
+        echo "$(grep -vE '^#|^$' /etc/sudoers)
+        $(grep -E '^PermitRootLogin' /etc/ssh/sshd_config)
+        $(grep -E '^AllowUsers' /etc/ssh/sshd_config)
+        $(grep -E '^AllowGroups' /etc/ssh/sshd_config || true)"
+      register: config_details
 
     - name: Append configuration details to file
       copy:
+        content: "{{ config_details.stdout }}"
         dest: /path/to/output.txt
-        content: "{{ config_string }}"
         mode: '0644'
