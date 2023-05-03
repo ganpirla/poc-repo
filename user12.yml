@@ -1,0 +1,32 @@
+---
+- name: Collect sudo and sshd configuration details
+  hosts: all
+  become: yes
+  tasks:
+    - name: Collect sudo rules
+      shell: "grep -vE '^#|^$' /etc/sudoers"
+      register: sudo_rules
+
+    - name: Collect PermitRootLogin details
+      shell: "grep -E '^PermitRootLogin' /etc/ssh/sshd_config"
+      register: permit_root_login
+      changed_when: false
+
+    - name: Collect AllowUsers details
+      shell: "grep -E '^AllowUsers' /etc/ssh/sshd_config"
+      register: allow_users
+      changed_when: false
+
+    - name: Collect AllowGroups details
+      shell: "grep -E '^AllowGroups' /etc/ssh/sshd_config"
+      register: allow_groups
+      changed_when: false
+
+    - name: Print configuration details
+      debug:
+        var: item.stdout
+      loop:
+        - "{{ sudo_rules }}"
+        - "{{ permit_root_login }}"
+        - "{{ allow_users }}"
+        - "{{ allow_groups }}"
