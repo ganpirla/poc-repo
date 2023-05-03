@@ -1,18 +1,3 @@
-import subprocess
-
-def shell(command, cwd=None):
-    return subprocess.check_output(command, shell=True, cwd=cwd).decode('utf-8').strip()
-
-class FilterModule(object):
-    def filters(self):
-        return {
-            'shell': shell
-        }
-
-
-
-=====
-
 <html>
 <head>
   <title>User Account Audit Report</title>
@@ -30,7 +15,7 @@ class FilterModule(object):
     {% for user in user_list.stdout_lines %}
     <tr>
       <td>{{ user }}</td>
-      <td>{{ user | shell('groups') }}</td>
+      <td>{{ user | shell('id -Gn ' + user) }}</td>
       <td>{{ user | shell('lastlog -u ' + user + ' | tail -n 1 | cut -c 44-', '/etc') }}</td>
       <td>{{ user | shell('chage -l ' + user + " | awk -F ': ' '/^Password expires/ { print $2 }'", '/etc') }}</td>
       <td>{{ user | shell('chage -l ' + user + " | awk -F ': ' '/^Last password change/ { print $2 }'", '/etc') }}</td>
@@ -39,7 +24,3 @@ class FilterModule(object):
   </table>
 </body>
 </html>
-
-
-
-======
