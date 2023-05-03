@@ -15,10 +15,10 @@
     {% for user in user_list.stdout_lines %}
     <tr>
       <td>{{ user }}</td>
-      <td>{{ user | command('id -Gn ' + user) }}</td>
-      <td>{{ user | command('lastlog -u ' + user + ' |tail -n 1 | cut -c 44-') }}</td>
-      <td>{{ user | command('chage -l ' + user + " | grep 'Password expires' | cut -d ':' -f 2") }}</td>
-      <td>{{ user | command('chage -l ' + user + " | grep 'Last password change' | cut -d ':' -f 2") }}</td>
+      <td>{{ user | shell('id -Gn ' ~ user) }}</td>
+      <td>{{ user | shell('lastlog -u ' ~ user ~ ' |tail -n 1 | cut -c 44-') }}</td>
+      <td>{{ user | shell('chage -l ' ~ user ~ " | grep 'Password expires' | cut -d ':' -f 2") }}</td>
+      <td>{{ user | shell('chage -l ' ~ user ~ " | grep 'Last password change' | cut -d ':' -f 2") }}</td>
     </tr>
     {% endfor %}
   </table>
