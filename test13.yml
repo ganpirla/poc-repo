@@ -1,0 +1,42 @@
+- name: Collect OCI Linux Compute instances baseline details
+  hosts: all
+  gather_facts: yes
+
+  tasks:
+    - name: Delete compute baseline details file if it exists
+      file:
+        path: /tmp/compute-baseline-details.txt
+        state: absent
+      delegate_to: localhost
+
+    - name: Create compute baseline details file if it doesn't exist
+      file:
+        path: /tmp/compute-baseline-details.txt
+        state: touch
+      delegate_to: localhost
+      when: not ansible_check_mode
+
+    - name: Generate compute baseline report
+      shell: |
+        printf "%-40s %-40s %-40s %-60s %-50s %-50s \n" "Hostname" "Display Name" "IP Address" "Number of OCPU" "Total Memory" "Instance shape" > /tmp/compute-baseline-details.txt
+          hostname=$(oci-metadata | sed -n 's/hostname: //p')
+          display_name=$(oci-metadata | sed -n 's/Display Name: //p')
+          ip_address=$(oci-metadata | sed -n 's/Private IP address: //p')
+          number_of_ocpus=$(oci-metadata | sed -n 's/ocpus: //p')
+          total_memory=$(oci-metadata | sed -n 's/memoryInGBs: //p')
+          instance_shape=$(oci-metadata | sed -n 's/Instance shape: //p')
+          printf "%-40s %-40s %-40s %-60s %-50s %-50s \n" "$hostname" "$display_name" "$ip_address" "$number_of_ocpus" "$total_memory" "$instance_shape" >> /tmp/compute-baseline-details.txt
+      register: compute_baseline.output
+      changed_when: false
+    - debug:
+            var: compute_baseline.output.stdout_lines
+
+    - name: Append debug output to file on control node
+      lineinfile:
+        line: |
+          {{ inventory_hostname }} OCI Linux Compute instances baseline details:
+          {{ compute_baseline.output.stdout }}
+        path: /tmp/compute-baseline-details.txt
+        insertafter: EOF
+      delegate_to: localhost
+ 
