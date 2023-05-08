@@ -1,0 +1,14 @@
+---
+- name: Collect available packages and patch servers
+  hosts: all
+  become: true
+
+  tasks:
+  - name: Collect available packages
+    command: yum check-update | tail -n +2 | awk '{print $1}' > /tmp/{{ inventory_hostname }}.txt
+    changed_when: false
+
+  - name: Install approved packages
+    yum:
+      name: "{{ lookup('file', '/tmp/' + inventory_hostname + '.txt') }}"
+      state: latest
