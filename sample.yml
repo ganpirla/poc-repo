@@ -23,7 +23,7 @@
 
     - name: Generate user account audit report
       shell: |
-        printf "%-40s %-40s %-40s %-60s %-50s %-50s\n" "Username" "shell" "Groups" "Last Login" "Password Expiry" "Last Password Change" > /tmp/user-account-list-details.txt
+        printf "%-40s %-40s %-40s %-60s %-50s %-50s\n" "Username" "Shell" "Groups" "Last Login" "Password Expiry" "Last Password Change" > /tmp/user-account-list-details.txt
         for user in {{ user_list.stdout_lines | join(' ') }}; do
           groups=$(groups $user)
           shell=$(getent passwd $user | cut -d: -f7)
@@ -44,15 +44,22 @@
       register: file_output
       changed_when: false
 
-    - name: Debug output of file contents
-      debug:
-        var: file_output.stdout
+    - name: Format file contents with boxes
+      shell: |
+        echo "$(sed '1d' /tmp/user-account-list-details.txt | awk 'BEGIN {print "+----------------------------------------+----------------------------------------+----------------------------------------+------------------------------------------------------------+----------------------------------------------------+----------------------------------------------------+"} {print "| " $1 " | " $2 " | " $3 " | " $4 " | " $5 " | " $6 " |"} END {print "+----------------------------------------+----------------------------------------+----------------------------------------+------------------------------------------------------------+----------------------------------------------------+----------------------------------------------------+"}')" > /tmp/user-account-list-details.txt
+      delegate_to: localhost
+      changed_when: false
+
+    - name: Debug output of formatted file contents
+      shell: cat /tmp/user-account-list-details.txt
+      register: formatted_file_output
+      changed_when: false
 
     - name: Append debug output to file on control node
       lineinfile:
         line: |
           {{ inventory_hostname }} Audit report for user accounts on OCI Linux Compute instances:
-          {{ file_output.stdout }}
+          {{ formatted_file_output.stdout }}
         path: /tmp/user-account-list-details.txt
         insertafter: EOF
       delegate_to: localhost
