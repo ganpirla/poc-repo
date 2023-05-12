@@ -1,3 +1,40 @@
+#!/usr/bin/env python3
+
+import sys
+
+user_list = sys.argv[1:]
+
+header = ["Username", "Shell", "Groups", "Last Login", "Password Expiry", "Last Password Change"]
+data = []
+
+for user in user_list:
+    groups = subprocess.check_output(["groups", user]).decode().strip()
+    shell = subprocess.check_output(["getent", "passwd", user]).decode().split(":")[-1].strip()
+    last_login = subprocess.check_output(["lastlog", "-u", user]).decode().splitlines()[-1].split()[-4:]
+    password_expiry = subprocess.check_output(["chage", "-l", user]).decode().splitlines()[2].split(":")[-1].strip()
+    last_password_change = subprocess.check_output(["chage", "-l", user]).decode().splitlines()[1].split(":")[-1].strip()
+    data.append([user, shell, groups, " ".join(last_login), password_expiry, last_password_change])
+
+# Calculate the maximum width for each column
+col_widths = [max(len(header[i]), max(len(str(row[i])) for row in data)) for i in range(len(header))]
+
+# Generate the formatted output
+output = ""
+output += "┌" + "─" * (sum(col_widths) + 3 * len(header) - 1) + "┐\n"
+output += "│ " + "  │  ".join(header) + "  │\n"
+output += "├" + "─" * (sum(col_widths) + 3 * len(header) - 1) + "┤\n"
+for row in data:
+    formatted_row = [str(row[i]).ljust(col_widths[i]) for i in range(len(header))]
+    output += "│ " + "  │  ".join(formatted_row) + "  │\n"
+output += "└" + "─" * (sum(col_widths) + 3 * len(header) - 1) + "┘\n"
+
+print(output)
+
+
+==========
+
+
+
 - name: Audit user accounts on OCI Linux Compute instances
   hosts: all
   gather_facts: yes
@@ -22,16 +59,9 @@
       when: not ansible_check_mode
 
     - name: Generate user account audit report
-      shell: |
-        printf "%-40s %-40s %-40s %-60s %-50s %-50s\n" "Username" "Shell" "Groups" "Last Login" "Password Expiry" "Last Password Change" > /tmp/user-account-list-details.txt
-        for user in {{ user_list.stdout_lines | join(' ') }}; do
-          groups=$(groups $user)
-          shell=$(getent passwd $user | cut -d: -f7)
-          last_login=$(lastlog -u $user |tail -n 1 | cut -c 44-)
-          password_expiry=$(chage -l $user | grep 'Password expires' | cut -d ':' -f 2)
-          last_password_change=$(chage -l $user | grep 'Last password change' | cut -d ':' -f 2)
-          printf "%-40s %-40s %-40s %-60s %-50s %-50s\n" "$user" "$shell" "$groups" "$last_login" "$password_expiry" "$last_password_change" >> /tmp/user-account-list-details.txt
-        done
+      script: scripts/user_audit_report.py
+      args:
+        user_list: "{{ user_list.stdout_lines }}"
       register: user_audit_report_output
       changed_when: false
 
@@ -44,22 +74,11 @@
       register: file_output
       changed_when: false
 
-    - name: Format file contents with boxes
-      shell: |
-        echo "$(sed '1d' /tmp/user-account-list-details.txt | awk 'BEGIN {print "+----------------------------------------+----------------------------------------+----------------------------------------+------------------------------------------------------------+----------------------------------------------------+----------------------------------------------------+"} {print "| " $1 " | " $2 " | " $3 " | " $4 " | " $5 " | " $6 " |"} END {print "+----------------------------------------+----------------------------------------+----------------------------------------+------------------------------------------------------------+----------------------------------------------------+----------------------------------------------------+"}')" > /tmp/user-account-list-details.txt
-      delegate_to: localhost
-      changed_when: false
-
-    - name: Debug output of formatted file contents
-      shell: cat /tmp/user-account-list-details.txt
-      register: formatted_file_output
-      changed_when: false
-
     - name: Append debug output to file on control node
       lineinfile:
         line: |
           {{ inventory_hostname }} Audit report for user accounts on OCI Linux Compute instances:
-          {{ formatted_file_output.stdout }}
+          {{ file_output.stdout }}
         path: /tmp/user-account-list-details.txt
         insertafter: EOF
       delegate_to: localhost
