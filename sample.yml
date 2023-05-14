@@ -1,15 +1,37 @@
 ---
-- name: Monitor Keyword and Send Email
-  hosts: localhost
-  gather_facts: false
+- name: Monitor ODI Application Status and Send Email if not running
+  hosts: all
+  gather_facts: yes
 
   tasks:
-    - name: Check keyword in process list
-      command: ps -ef | grep -I --color=never abc_def
-      register: ps_output
+    - name: Check odi_server process in process list
+      shell: ps -fu  oracle | grep -i odi_server
+      register: ps_odi_output
       failed_when: false
-      changed_when: false
+      changed_when: false      
+    - debug:
+            var: ps_odi_output.stdout_lines
 
-    - name: Send email if keyword not found
-      command: echo "Keyword not found" | sendmail user@example.com
-      when: ps_output.stdout_lines | length == 0
+    - name: Delete process list details file if it exists
+      file:
+        path: /tmp/odi-process-list-details.txt
+        state: absent
+      delegate_to: localhost
+
+    - name: Create process list details file if it doesn't exist
+      file:
+        path: /tmp/odi-process-list-details.txt
+        state: touch
+      delegate_to: localhost
+      when: not ansible_check_mode
+
+    - name: Append debug output to file on control node
+      lineinfile:
+        line: |
+          {{ inventory_hostname }} ODI Application not running please check:
+          ps -fu  oracle | grep -i odi_server
+          {{ ps_odi_output.stdout }}
+        path: /tmp/odi-process-list-details.txt 
+        insertafter: EOF
+      delegate_to: localhost
+      when: ps_odi_output.stdout_lines | length == 0
