@@ -1,84 +1,15 @@
-#!/usr/bin/env python3
-
-import sys
-
-user_list = sys.argv[1:]
-
-header = ["Username", "Shell", "Groups", "Last Login", "Password Expiry", "Last Password Change"]
-data = []
-
-for user in user_list:
-    groups = subprocess.check_output(["groups", user]).decode().strip()
-    shell = subprocess.check_output(["getent", "passwd", user]).decode().split(":")[-1].strip()
-    last_login = subprocess.check_output(["lastlog", "-u", user]).decode().splitlines()[-1].split()[-4:]
-    password_expiry = subprocess.check_output(["chage", "-l", user]).decode().splitlines()[2].split(":")[-1].strip()
-    last_password_change = subprocess.check_output(["chage", "-l", user]).decode().splitlines()[1].split(":")[-1].strip()
-    data.append([user, shell, groups, " ".join(last_login), password_expiry, last_password_change])
-
-# Calculate the maximum width for each column
-col_widths = [max(len(header[i]), max(len(str(row[i])) for row in data)) for i in range(len(header))]
-
-# Generate the formatted output
-output = ""
-output += "┌" + "─" * (sum(col_widths) + 3 * len(header) - 1) + "┐\n"
-output += "│ " + "  │  ".join(header) + "  │\n"
-output += "├" + "─" * (sum(col_widths) + 3 * len(header) - 1) + "┤\n"
-for row in data:
-    formatted_row = [str(row[i]).ljust(col_widths[i]) for i in range(len(header))]
-    output += "│ " + "  │  ".join(formatted_row) + "  │\n"
-output += "└" + "─" * (sum(col_widths) + 3 * len(header) - 1) + "┘\n"
-
-print(output)
-
-
-==========
-
-
-
-- name: Audit user accounts on OCI Linux Compute instances
-  hosts: all
-  gather_facts: yes
+---
+- name: Monitor Keyword and Send Email
+  hosts: localhost
+  gather_facts: false
 
   tasks:
-    - name: Get list of all user accounts
-      shell: cat /etc/passwd | cut -d ":" -f 1
-      register: user_list
+    - name: Check keyword in process list
+      command: ps -ef | grep -I --color=never abc_def
+      register: ps_output
+      failed_when: false
       changed_when: false
 
-    - name: Delete user account details file if it exists
-      file:
-        path: /tmp/user-account-list-details.txt
-        state: absent
-      delegate_to: localhost
-
-    - name: Create user account details file if it doesn't exist
-      file:
-        path: /tmp/user-account-list-details.txt
-        state: touch
-      delegate_to: localhost
-      when: not ansible_check_mode
-
-    - name: Generate user account audit report
-      script: scripts/user_audit_report.py
-      args:
-        user_list: "{{ user_list.stdout_lines }}"
-      register: user_audit_report_output
-      changed_when: false
-
-    - name: Debug output of audit report
-      debug:
-        var: user_audit_report_output.stdout_lines
-
-    - name: Debug output of file
-      shell: cat /tmp/user-account-list-details.txt
-      register: file_output
-      changed_when: false
-
-    - name: Append debug output to file on control node
-      lineinfile:
-        line: |
-          {{ inventory_hostname }} Audit report for user accounts on OCI Linux Compute instances:
-          {{ file_output.stdout }}
-        path: /tmp/user-account-list-details.txt
-        insertafter: EOF
-      delegate_to: localhost
+    - name: Send email if keyword not found
+      command: echo "Keyword not found" | sendmail user@example.com
+      when: ps_output.stdout_lines | length == 0
