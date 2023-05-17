@@ -1,0 +1,6 @@
+        - name: Append the content of the temporary file to a local log file
+          local_action: shell echo "{{ temp_file_content.stdout }}" >> /tmp/root-login-attempt-details.txt
+
+    - name: Convert line endings from unix to windows format
+      shell: sed -i 's/$/\r/' /tmp/root-login-attempt-details.txt
+      delegate_to: localhost
