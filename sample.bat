@@ -9,3 +9,20 @@ for %%u in (%users%) do (
 )
 
 pause
+
+
+======
+
+
+@echo off
+
+set "userfile=usernames.txt"
+
+for /f %%u in (%userfile%) do (
+    echo Checking user: %%u
+    net user %%u /domain | findstr /C:"User name" /C:"Account active"
+    echo.
+)
+
+pause
+
