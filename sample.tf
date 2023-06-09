@@ -68,3 +68,57 @@ resource "oci_core_block_volume" "additional_block_volume" {
 }
 
 # Add other resources as required
+
+
+
+=====
+  
+
+
+resource "oci_core_volume" "block_volume" {
+  count             = length(oci_core_instance.compute_instance)
+  availability_domain = oci_core_subnet.subnet[count.index].availability_domain
+  compartment_id    = var.compartment_ocid
+  display_name      = "BlockVolume-${oci_core_instance.compute_instance[count.index].display_name}"
+  size_in_gbs       = var.block_volume_size
+}
+
+resource "oci_core_volume_attachment" "block_volume_attachment" {
+  count                = length(oci_core_instance.compute_instance)
+  availability_domain  = oci_core_subnet.subnet[count.index].availability_domain
+  instance_id          = oci_core_instance.compute_instance[count.index].id
+  volume_id            = oci_core_volume.block_volume[count.index].id
+}
+
+resource "oci_core_instance" "compute_instance" {
+  count             = length(var.instance_display_names)
+  compartment_id    = var.compartment_ocid
+  display_name      = var.instance_display_names[count.index]
+  shape             = var.shape
+  subnet_id         = oci_core_subnet.subnet[count.index].id
+  image_id          = "<IMAGE_OCID>"
+
+  defined_tags = {
+    "<TAG_NAMESPACE>.<TAG_KEY>" = "<TAG_VALUE>"
+  }
+
+  agent_config {
+    is_management_disabled = false
+    is_monitoring_disabled = true
+  }
+
+  network_interface {
+    subnet_id = oci_core_subnet.subnet[count.index].id
+    vnic_id   = oci_core_vnic.vnic[count.index].id
+  }
+
+  metadata = {
+    ssh_authorized_keys = "<SSH_PUBLIC_KEY>"
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  # Other instance configurations...
+}
