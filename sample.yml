@@ -1,1 +1,0 @@
-kubectl get pods --namespace <namespace> -o=jsonpath='{range .items[*]}{"\n"}{.metadata.name}{"\t"}{.spec.containers[*].resources.requests.cpu}{"\t"}{.spec.containers[*].resources.requests.memory}{"\n"}{end}'
