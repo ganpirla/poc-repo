@@ -1,5 +1,0 @@
-requests.pods: 10/100: This indicates that the namespace is allowed to create a maximum of 100 pods, and currently has 10 pods running.
-requests.cpu: 1500m/19: The namespace has set a request of 1500 milliCPU (1.5 CPU cores) and a limit of 19 CPU cores for CPU resources.
-requests.memory: 10Gi/16Gi: The namespace has set a request of 10 gigabytes of memory and a limit of 16 gigabytes for memory resources.
-limits.cpu: 5/12: The namespace has set a limit of 5 CPU cores out of a maximum limit of 12 CPU cores.
-limits.memory: 20Gi/24Gi: The namespace has set a limit of 20 gigabytes of memory out of a maximum limit of 24 gigabytes.
