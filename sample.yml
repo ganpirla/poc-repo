@@ -1,18 +1,1 @@
----
-- name: Extract and Collect Usernames from /etc/passwd
-  hosts: all
-  become: true
-  gather_facts: false
 
-  tasks:
-    - name: Extract Usernames
-      shell: "awk -F: '{print $1}' /etc/passwd"
-      register: awk_result
-      changed_when: false
-
-    - name: Append Usernames to Dated File
-      lineinfile:
-        dest: "/tmp/all_usernames_{{ ansible_date_time.day }}_{{ ansible_date_time.month }}_{{ ansible_date_time.year }}.txt"
-        line: "{{ awk_result.stdout_lines }}"
-        create: yes
-      delegate_to: localhost
