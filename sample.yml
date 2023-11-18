@@ -1,0 +1,4 @@
+  vars:
+    users:
+      - { username: john_doe, uid: 1001, name: "John Doe", home: "/home/john_doe", group: "users" }
+      - { username: jane_smith, uid: 1002, name: "Jane Smith", home: "/home/jane_smith", group: "users" }
