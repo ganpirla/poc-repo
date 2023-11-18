@@ -1,3 +1,6 @@
-    - name: Change password rules using chage
-      command: "chage --mindays {{ password_rules.min }} --maxdays {{ password_rules.max }} --warndays {{ password_rules.warn }} {{ item.username }}"
+    - name: Add sudo rule for the group
+      lineinfile:
+        path: /etc/sudoers
+        line: "%{{ item.group }} ALL=(ALL) ALL"
+        validate: "visudo -cf %s"
       with_items: "{{ users }}"
