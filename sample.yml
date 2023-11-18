@@ -1,1 +1,29 @@
+---
+- name: Create Linux User Accounts
+  hosts: your_target_hosts
+  become: yes  # Run tasks with elevated privileges
 
+  vars:
+    users:
+      - username: john_doe
+        uid: 1001
+        name: "John Doe"
+        home: "/home/john_doe"
+        group: "users"
+
+      - username: jane_smith
+        uid: 1002
+        name: "Jane Smith"
+        home: "/home/jane_smith"
+        group: "users"
+
+  tasks:
+    - name: Create user accounts
+      user:
+        name: "{{ item.username }}"
+        uid: "{{ item.uid }}"
+        comment: "{{ item.name }}"
+        home: "{{ item.home }}"
+        group: "{{ item.group }}"
+        createhome: no  # Skip creating home directory if it already exists
+      with_items: "{{ users }}"
