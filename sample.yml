@@ -1,0 +1,3 @@
+    - name: Change password rules using chage
+      command: "chage --mindays {{ password_rules.min }} --maxdays {{ password_rules.max }} --warndays {{ password_rules.warn }} {{ item.username }}"
+      with_items: "{{ users }}"
