@@ -1,6 +1,0 @@
-    - name: Add sudo rule for the group
-      lineinfile:
-        path: /etc/sudoers
-        line: "%{{ item.group }} ALL=(ALL) ALL"
-        validate: "visudo -cf %s"
-      with_items: "{{ users }}"
