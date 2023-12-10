@@ -1,0 +1,14 @@
+---
+- name: Synchronize files from source to destination
+  hosts: your_target_host
+  tasks:
+    - name: Synchronize files
+      synchronize:
+        src: /path/to/source/
+        dest: /path/to/destination/
+        copy_links: true
+        delete: false
+        recursive: true
+        rsync_opts:
+          - "--ignore-existing"
+          - "--ignore-missing-args"
