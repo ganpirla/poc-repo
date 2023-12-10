@@ -1,0 +1,48 @@
+---
+- name: Synchronize files across servers
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Synchronize logs for server1
+      synchronize:
+        src: /a/b/c/dir_1/logs/
+        dest: /data/server1/logs/
+        copy_links: true
+        delete: false
+        recursive: true
+        rsync_opts:
+          - "--ignore-missing-args"
+      when: inventory_hostname == 'server1'
+
+    - name: Synchronize logs for server2
+      synchronize:
+        src: /a/b/c/dir_2/logs/
+        dest: /data/server2/logs/
+        copy_links: true
+        delete: false
+        recursive: true
+        rsync_opts:
+          - "--ignore-missing-args"
+      when: inventory_hostname == 'server2'
+
+    - name: Synchronize logs for server3
+      synchronize:
+        src: /a/b/c/dir_3/logs/
+        dest: /data/server3/logs/
+        copy_links: true
+        delete: false
+        recursive: true
+        rsync_opts:
+          - "--ignore-missing-args"
+      when: inventory_hostname == 'server3'
+
+    - name: Synchronize logs for server4
+      synchronize:
+        src: /a/b/c/dir_4/logs/
+        dest: /data/server4/logs/
+        copy_links: true
+        delete: false
+        recursive: true
+        rsync_opts:
+          - "--ignore-missing-args"
+      when: inventory_hostname == 'server4'
