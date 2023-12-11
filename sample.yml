@@ -1,0 +1,20 @@
+---
+- name: Run rsync on each server
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Rsync logs for server1
+      command: rsync -av --copy-links --ignore-missing-args "/a/b/c/dir_1/logs/" "/data/server1/logs/"
+      when: inventory_hostname == 'server1'
+
+    - name: Rsync logs for server2
+      command: rsync -av --copy-links --ignore-missing-args "/a/b/c/dir_2/logs/" "/data/server2/logs/"
+      when: inventory_hostname == 'server2'
+
+    - name: Rsync logs for server3
+      command: rsync -av --copy-links --ignore-missing-args "/a/b/c/dir_3/logs/" "/data/server3/logs/"
+      when: inventory_hostname == 'server3'
+
+    - name: Rsync logs for server4
+      command: rsync -av --copy-links --ignore-missing-args "/a/b/c/dir_4/logs/" "/data/server4/logs/"
+      when: inventory_hostname == 'server4'
