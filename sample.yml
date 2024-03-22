@@ -21,11 +21,24 @@
 
     - name: Print connectivity status
       debug:
-        msg: "OSMs connectivity status: {{ connectivity_status }}"
+        msg: "OSMs connectivity status on {{ inventory_hostname }}: {{ connectivity_status }}"
+
+    - name: Group hosts by connectivity status
+      group_by:
+        key: "{{ 'issue_detected_hosts' if connectivity_status == 'Issue Detected' else 'no_issue_hosts' }}"
+
+- name: Send email if issue detected
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Get the list of hosts with connectivity issues
+      set_fact:
+        issue_hosts: "{{ groups['issue_detected_hosts'] | default([]) }}"
 
     - name: Send email if issue detected
-      when: connectivity_status == "Issue Detected"
+      when: issue_hosts | length > 0
       mail:
         to: your_email@example.com
-        subject: "OSMs Connectivity Issue Detected"
-        body: "The osms test command detected connectivity issues. Please investigate."
+        subject: "OSMs Connectivity Issue Detected on {{ issue_hosts }}"
+        body: |
+          The osms test command detected connectivity issues on the following hosts: {{ issue_hosts | join(', ') }}. Please investigate.
