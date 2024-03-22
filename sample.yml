@@ -1,0 +1,31 @@
+---
+- name: Check OSMs connectivity
+  hosts: your_target_host
+  gather_facts: no
+  tasks:
+    - name: Execute osms test command
+      shell: osms test
+      register: osms_test_output
+      ignore_errors: yes
+
+    - name: Check connectivity status
+      set_fact:
+        connectivity_status: >
+          {% if "There does not appear to be any network or connectivity issues." in osms_test_output.stdout %}
+            OK
+          {% elif "Unable to connect to server." in osms_test_output.stdout %}
+            Issue Detected
+          {% else %}
+            Unknown
+          {% endif %}
+
+    - name: Print connectivity status
+      debug:
+        msg: "OSMs connectivity status: {{ connectivity_status }}"
+
+    - name: Send email if issue detected
+      when: connectivity_status == "Issue Detected"
+      mail:
+        to: your_email@example.com
+        subject: "OSMs Connectivity Issue Detected"
+        body: "The osms test command detected connectivity issues. Please investigate."
