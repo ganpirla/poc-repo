@@ -23,13 +23,16 @@
       debug:
         msg: "OSMs connectivity status on {{ inventory_hostname }}: {{ connectivity_status }}"
 
-    - name: Save osms test output to file if issue detected
+    - name: Save connectivity status to file if issue detected
       when: connectivity_status == "Issue Detected"
       delegate_to: localhost
-      lineinfile:
-        path: "/tmp/osms_test_output.txt"
-        line: "{{ osms_test_output.stdout }}"
-        create: yes
+      copy:
+        content: |
+          Host: {{ inventory_hostname }}
+          Status: {{ connectivity_status }}
+          ------------------------------
+        dest: "/tmp/osms_test_output.txt"
+        append: yes
 
 - name: Send email if issue detected
   hosts: localhost
