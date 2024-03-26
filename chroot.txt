@@ -1,0 +1,38 @@
+Create a Chroot Directory Structure:
+First, you need to create a directory structure that will serve as the root for the chroot jail.
+
+sudo mkdir -p /sftp
+sudo mkdir -p /sftp/a/b/c
+
+Set appropriate permissions on the directories. The user server1user should have write permissions to the /a/b/c directory.
+
+sudo chown server1user:server1user /sftp/a/b/c
+sudo chmod 755 /sftp/a/b/c
+
+Create a group that will contain users allowed to use SFTP.
+sudo groupadd sftp_users
+
+
+Edit your SSH configuration file (/etc/ssh/sshd_config) and add the following lines at the 
+
+Match User server2user
+    ChrootDirectory /sftp
+    ForceCommand internal-sftp
+    AllowTcpForwarding no
+    X11Forwarding no
+    PermitTunnel no
+    PasswordAuthentication yes
+    AuthorizedKeysFile /etc/ssh/%u/authorized_keys
+
+After saving the changes to sshd_config, restart the SSH service for the changes to take effect:
+
+sudo systemctl restart sshd
+
+Now, when server2user connects via SFTP to server1, they will be confined to the /a/b/c directory. Any attempt to navigate outside this directory will result in access denial.
+
+Ensure to test thoroughly to make sure the setup works as expected before deploying it in a production environment. Additionally, make sure to back up your SSH configuration before making changes.
+
+
+
+
+
