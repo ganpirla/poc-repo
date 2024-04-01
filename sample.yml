@@ -1,0 +1,20 @@
+---
+- name: Check server time zone
+  hosts: your_servers
+  gather_facts: yes
+
+  tasks:
+    - name: Capture server timezone information
+      shell: timedatectl | grep 'Time zone' | awk '{print $3}'
+      register: server_timezone
+
+    - name: Check if timezone is UTC
+      fail:
+        msg: "Timezone is not UTC, current timezone is {{ server_timezone.stdout }}"
+      when: server_timezone.stdout != "UTC"
+
+    - name: Save server name and timezone to a file
+      lineinfile:
+        path: "/path/to/timezone_info.txt"
+        line: "{{ inventory_hostname }} timezone is {{ server_timezone.stdout }}"
+      when: server_timezone.stdout != "UTC"
