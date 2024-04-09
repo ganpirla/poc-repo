@@ -1,1 +1,4 @@
 
+- set_fact:
+    any_group_has_timezone_other_than_utc: "{{ groups | map('extract', hostvars, ['server_timezone', 'stdout']) | map('trim') | flatten | difference(['UTC']) | length > 0 }}"
+  run_once: true
