@@ -1,4 +1,36 @@
+---
+- name: Validate Server Timezones
+  hosts: all
+  gather_facts: yes
+  vars:
+    mail_recipient: "dl@example.com"
+    servers_not_in_GMT: []
 
-- set_fact:
-    any_group_has_timezone_other_than_utc: "{{ groups | map('extract', hostvars, ['server_timezone', 'stdout']) | map('trim') | flatten | difference(['UTC']) | length > 0 }}"
-  run_once: true
+  tasks:
+    - name: Check server timezone
+      command: timedatectl | grep "Time zone" | awk '{print $3}'
+      register: timezone_output
+      changed_when: false
+      ignore_errors: true
+
+    - name: Add server to the list if timezone is not GMT
+      set_fact:
+        servers_not_in_GMT: "{{ servers_not_in_GMT + [{ 'hostname': ansible_hostname, 'timezone': timezone_output.stdout }] }}"
+      when: timezone_output.stdout != "GMT"
+
+    - name: Create servers_not_in_GMT.txt file
+      copy:
+        content: |
+          {% for server in servers_not_in_GMT %}
+          {{ server.hostname }},{{ server.timezone }}
+          {% endfor %}
+        dest: servers_not_in_GMT.txt
+      when: servers_not_in_GMT | length > 0
+
+    - name: Send email if servers_not_in_GMT list is not empty
+      mail:
+        to: "{{ mail_recipient }}"
+        subject: "Servers with non-GMT timezone"
+        attach: servers_not_in_GMT.txt
+        body: "Please validate the timezone of the following servers:"
+      when: servers_not_in_GMT | length > 0
