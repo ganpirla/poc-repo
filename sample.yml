@@ -1,1 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-monitor
+  template:
+    metadata:
+      labels:
+        app: log-monitor
+    spec:
+      containers:
+      - name: log-monitor-container
+        image: <your_docker_image_with_curl_or_wget_installed>
+        command: ["sh", "-c"]
+        args: ["curl <url_to_monitor>"]
 
