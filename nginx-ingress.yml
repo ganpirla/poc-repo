@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress
+  namespace: default  # Adjust this if your service is in a different namespace
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: "/"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"  # If you don't want to enforce SSL (set true for HTTPS)
+spec:
+  rules:
+  - host: nginx.internal.myapp.com  # Replace with your desired domain name
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx-lb-service  # Name of your NGINX service in Kubernetes
+            port:
+              number: 443  # Port on which your NGINX service is exposed
