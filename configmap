@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: default
+data:
+  nginx.conf: |
+    events {}
+
+    http {
+        upstream backend {
+            # Define your backend VMs (use your real VM names/IPs)
+            server vm1.example.com:443;
+            server vm2.example.com:443;
+            server vm3.example.com:443;
+        }
+
+        server {
+            listen 443 ssl;
+
+            # SSL Configuration (ensure your cert and key are correct)
+            ssl_certificate /etc/ssl/certs/tls.crt;
+            ssl_certificate_key /etc/ssl/certs/tls.key;
+
+            location / {
+                proxy_pass https://backend;
+                proxy_ssl_verify off;  # If the backend servers don't have valid SSL certificates
+            }
+        }
+    }
