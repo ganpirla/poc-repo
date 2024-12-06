@@ -1,0 +1,5 @@
+az vm run-command invoke \
+  --resource-group MyResourceGroup \
+  --name MyVM \
+  --command-id RunShellScript \
+  --scripts "az group list --output table"
