@@ -10,3 +10,9 @@ az vm disk detach \
   --vm-name MyVM \
   --name MyDataDisk
 
+az vm delete --resource-group $resourceGroup --name $vmName --yes --no-wait
+
+az network nic delete --resource-group $resourceGroup --name $nicName
+
+az disk delete --resource-group $resourceGroup --name $osDiskName --yes --no-wait
+
