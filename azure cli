@@ -3,3 +3,10 @@ az vm run-command invoke \
   --name MyVM \
   --command-id RunShellScript \
   --scripts "az group list --output table"
+
+
+az vm disk detach \
+  --resource-group MyResourceGroup \
+  --vm-name MyVM \
+  --name MyDataDisk
+
