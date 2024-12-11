@@ -9,3 +9,4 @@ This configuration means:
 
 The container is guaranteed 2Gi of memory and 0.5 CPU core (requests).
 The container is limited to 2Gi of memory and 0.5 CPU core (limits).
+If the container uses more memory or CPU than the limit, Kubernetes may kill the container and try to restart it.
