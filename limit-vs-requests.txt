@@ -1,0 +1,11 @@
+resources:
+  requests:
+    memory: "2Gi"
+    cpu: "500m"
+  limits:
+    memory: "2Gi"
+    cpu: "500m"
+This configuration means:
+
+The container is guaranteed 2Gi of memory and 0.5 CPU core (requests).
+The container is limited to 2Gi of memory and 0.5 CPU core (limits).
