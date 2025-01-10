@@ -1,0 +1,34 @@
+trigger:
+- main
+
+jobs:
+- job: RunScriptOnMultipleVMs
+  displayName: 'Run Script on Multiple VMs'
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: '<your-azure-subscription>'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          # Define VM names and resource group
+          resourceGroup="your-resource-group"
+          vms=("VM1" "VM2" "VM3")
+          
+          # Script to be executed on all VMs
+          script="your-startup-script.sh"
+
+          # Run script on each VM
+          for vm in "${vms[@]}"; do
+            az vm run-command invoke \
+              --resource-group $resourceGroup \
+              --name $vm \
+              --command-id RunShellScript \
+              --scripts "$script" &
+          done
+          
+          # Wait for all background jobs to finish
+          wait
+      displayName: 'Invoke Script on VMs Concurrently'
