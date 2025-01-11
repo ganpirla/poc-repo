@@ -1,57 +1,106 @@
 {
-  // Font settings
-  "editor.fontFamily": "Menlo, Monaco, 'Courier New', monospace",
-  "editor.fontSize": 14,  // Adjust based on your preference
-  "editor.lineHeight": 22,  // Helps with readability, adjust if needed
-  "editor.fontLigatures": true,  // Enable ligatures if your font supports it
-  
-  // General UI and layout settings
-  "window.zoomLevel": 0,  // Set zoom level, adjust for better screen readability
-  "editor.minimap.enabled": true,  // Enable minimap for quick navigation
-  "editor.renderWhitespace": "boundary",  // Show whitespace characters only where necessary
-  "editor.renderControlCharacters": false,  // Disable rendering of control characters
-  "editor.tabSize": 2,  // Use 2 spaces for indentation (common in web development)
-  "editor.insertSpaces": true,  // Use spaces instead of tabs (recommended for consistency)
+  // --- Font and Text Editor Settings ---
+  "editor.fontFamily": "Menlo, Monaco, 'Courier New', monospace",  // Use Menlo font, fallback to others
+  "editor.fontSize": 14,  // Font size for readability, adjust as needed
+  "editor.lineHeight": 22,  // Spacing between lines
+  "editor.fontLigatures": true,  // Enable ligatures for better visual experience with fonts like FiraCode
 
-  // Code formatting and linting
-  "editor.formatOnSave": true,  // Automatically format code on save
-  "editor.formatOnType": true,  // Format as you type (optional but nice)
-  "editor.autoSave": "onWindowChange",  // Auto-save when you switch windows
-  "editor.autoSaveDelay": 1000,  // Auto-save delay (in ms)
-  
-  // Indentation settings
-  "files.trimTrailingWhitespace": true,  // Trim trailing spaces on save
-  "files.insertFinalNewline": true,  // Insert final newline when saving file
-
-  // Cursor and scroll settings
+  // --- Editor Layout and Behavior ---
+  "editor.tabSize": 2,  // Use 2 spaces for indentation (adjust to your coding style)
+  "editor.insertSpaces": true,  // Ensure spaces are used instead of tabs
+  "editor.autoClosingBrackets": "languageDefined",  // Auto-close brackets based on language
+  "editor.autoClosingQuotes": "languageDefined",  // Auto-close quotes based on language
+  "editor.renderWhitespace": "boundary",  // Show only spaces and tabs at boundaries (more readable)
+  "editor.renderControlCharacters": false,  // Hide control characters for cleaner view
+  "editor.cursorStyle": "line",  // Line cursor, but can be changed to block or underline
   "editor.cursorBlinking": "smooth",  // Smooth cursor animation
-  "editor.cursorStyle": "line",  // Line cursor (you can switch to block or underline if preferred)
-  "editor.mouseWheelZoom": true,  // Enable zooming by holding `Ctrl` or `Cmd` and scrolling
+  "editor.mouseWheelZoom": true,  // Zoom with the mouse wheel
+  "editor.detectIndentation": false,  // Prevent auto-detecting indentation (use your own style)
 
-  // Git and source control settings
-  "git.enableSmartCommit": true,  // Enable smart commits
-  "git.autofetch": true,  // Automatically fetch from remotes
+  // --- Code Formatting ---
+  "editor.formatOnSave": true,  // Automatically format code when saving
+  "editor.formatOnType": true,  // Automatically format code as you type
+  "editor.autoSave": "onWindowChange",  // Auto-save when switching between files or windows
+  "editor.autoSaveDelay": 1000,  // Delay before auto-saving in milliseconds
+  "files.trimTrailingWhitespace": true,  // Automatically remove trailing spaces
+  "files.insertFinalNewline": true,  // Always insert a final newline at the end of files
+
+  // --- Language Specific Settings ---
+  "[javascript]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"  // Use Prettier for JavaScript formatting
+  },
+  "[python]": {
+    "editor.tabSize": 4,
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "ms-python.python"  // Use Python autoformatter
+  },
+  "[html]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"  // Use Prettier for HTML formatting
+  },
+  "[css]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"  // Use Prettier for CSS formatting
+  },
+
+  // --- Git and Version Control Settings ---
+  "git.enableSmartCommit": true,  // Automatically stage and commit changes on `Cmd + Enter`
   "git.confirmSync": false,  // Skip confirmation for syncing repositories
+  "git.autofetch": true,  // Automatically fetch updates from remotes
+  "git.autoRebase": true,  // Automatically rebase instead of merging
+  "git.enableRebaseInMerge": true,  // Rebase instead of merge during pull
 
-  // Extensions and IntelliSense settings
-  "editor.suggestSelection": "first",  // Always select the first suggestion in the IntelliSense list
+  // --- Extensions and Snippets ---
+  "editor.snippetSuggestions": "top",  // Show snippets first in suggestion list
+  "editor.parameterHints": true,  // Show parameter hints while typing functions
   "editor.quickSuggestions": {
     "other": true,
     "comments": false,
     "strings": true
   },
-  "editor.snippetSuggestions": "top",  // Show snippets first in suggestion list
-  "editor.parameterHints": true,  // Show parameter hints in functions
 
-  // Editor appearance (Theme and colors)
-  "workbench.colorTheme": "Default Dark+",
+  // --- Minimap and Line Numbers ---
+  "editor.minimap.enabled": true,  // Enable minimap on the side for quick navigation
+  "editor.minimap.renderCharacters": true,  // Render actual code in minimap (not just colors)
+  "editor.renderLineHighlight": "gutter",  // Highlight the active line in the gutter
+  "editor.renderLineNumbers": "on",  // Show line numbers for better navigation
+  "editor.highlightActiveIndentation": true,  // Highlight the current indentation level
+
+  // --- Performance and File Handling ---
+  "files.autoSave": "onWindowChange",  // Enable auto-save to ensure files are saved automatically
+  "files.autoSaveDelay": 1000,  // Delay auto-save by 1 second
+  "files.exclude": {
+    "**/.git": true,  // Hide .git folder
+    "**/.DS_Store": true,  // Hide .DS_Store files on macOS
+    "**/node_modules": true,  // Hide node_modules folder for better explorer navigation
+    "**/.vscode": true  // Hide local VS Code configuration folder
+  },
+  "search.followSymlinks": false,  // Disable symlink following for better performance during search
+  "search.useIgnoreFiles": true,  // Respect `.gitignore` and `.ignore` files in search
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,  // Exclude git objects to improve performance
+    "**/.git/submodules/**": true,  // Exclude submodules for faster file watching
+    "**/node_modules/**": true  // Exclude `node_modules` for better performance
+  },
+
+  // --- UI and Accessibility ---
+  "window.zoomLevel": 0,  // Adjust zoom level (negative values zoom out, positive zoom in)
+  "workbench.colorTheme": "Default Dark+",  // Default dark theme for reduced eye strain
+  "workbench.iconTheme": "vs-seti",  // Use Seti icon theme for better visual appeal
   "editor.tokenColorCustomizations": {
     "textMateRules": [
       {
         "scope": "comment",
         "settings": {
           "foreground": "#6A9955",  // Light green for comments
-          "fontStyle": "italic"
+          "fontStyle": "italic"  // Italicize comments
         }
       },
       {
@@ -59,23 +108,39 @@
         "settings": {
           "foreground": "#C586C0"  // Purple for keywords
         }
+      },
+      {
+        "scope": "variable",
+        "settings": {
+          "foreground": "#9CDCFE"  // Light blue for variables
+        }
+      },
+      {
+        "scope": "constant",
+        "settings": {
+          "foreground": "#F8F8F2"  // White for constants (clear visibility)
+        }
       }
     ]
   },
+  "workbench.activityBar.visible": true,  // Show the activity bar on the left for quick access to features
+  "editor.cursorSmoothCaretAnimation": true,  // Smooth animation when the cursor moves
 
-  // Performance and file handling
-  "files.autoSave": "onWindowChange",  // Auto-save files when you switch windows
-  "files.exclude": {
-    "**/.git": true,  // Hide .git folder in explorer
-    "**/.DS_Store": true,  // Hide .DS_Store files on macOS
-    "**/node_modules": true  // Hide node_modules folder in explorer
-  },
-  "search.followSymlinks": false,  // Disable following symlinks for search (better performance)
-  "files.autoSaveDelay": 1000,  // Delay auto-save by 1 second
-  
-  // Display settings for clarity and ease of use
-  "editor.renderLineHighlight": "gutter",  // Highlight the line in the gutter only
-  "editor.highlightActiveIndentation": true,  // Highlight the current indentation level
-  "editor.matchBrackets": "always",  // Highlight matching brackets
-  "editor.renderLineNumbers": "on"  // Show line numbers (use "relative" for more flexibility)
+  // --- Accessibility Settings ---
+  "editor.accessibilitySupport": "on",  // Enable accessibility mode for better screen reader support
+  "editor.readOnly": false,  // Prevent editing in read-only files
+  "editor.smoothScrolling": true,  // Enable smooth scrolling for better reading experience
+
+  // --- Miscellaneous Useful Settings ---
+  "terminal.integrated.fontFamily": "Menlo, Monaco, 'Courier New', monospace",  // Terminal font settings
+  "terminal.integrated.fontSize": 14,  // Terminal font size
+  "terminal.integrated.scrollback": 10000,  // Increase scrollback buffer for terminal
+  "explorer.confirmDelete": false,  // Don't ask for confirmation when deleting files in Explorer
+  "explorer.autoReveal": true,  // Automatically reveal the file in the explorer when opened
+
+  // --- Debugging Settings ---
+  "debug.console.fontSize": 14,  // Adjust the font size for the Debug console
+  "debug.inlineValues": true,  // Show inline values in the editor when debugging
+  "debug.openDebug": "never",  // Never open the debug panel automatically when debugging
+  "debug.showInStatusBar": "never"  // Disable showing debugger information in the status bar
 }
