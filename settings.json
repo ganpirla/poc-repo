@@ -1,0 +1,81 @@
+{
+  // Font settings
+  "editor.fontFamily": "Menlo, Monaco, 'Courier New', monospace",
+  "editor.fontSize": 14,  // Adjust based on your preference
+  "editor.lineHeight": 22,  // Helps with readability, adjust if needed
+  "editor.fontLigatures": true,  // Enable ligatures if your font supports it
+  
+  // General UI and layout settings
+  "window.zoomLevel": 0,  // Set zoom level, adjust for better screen readability
+  "editor.minimap.enabled": true,  // Enable minimap for quick navigation
+  "editor.renderWhitespace": "boundary",  // Show whitespace characters only where necessary
+  "editor.renderControlCharacters": false,  // Disable rendering of control characters
+  "editor.tabSize": 2,  // Use 2 spaces for indentation (common in web development)
+  "editor.insertSpaces": true,  // Use spaces instead of tabs (recommended for consistency)
+
+  // Code formatting and linting
+  "editor.formatOnSave": true,  // Automatically format code on save
+  "editor.formatOnType": true,  // Format as you type (optional but nice)
+  "editor.autoSave": "onWindowChange",  // Auto-save when you switch windows
+  "editor.autoSaveDelay": 1000,  // Auto-save delay (in ms)
+  
+  // Indentation settings
+  "files.trimTrailingWhitespace": true,  // Trim trailing spaces on save
+  "files.insertFinalNewline": true,  // Insert final newline when saving file
+
+  // Cursor and scroll settings
+  "editor.cursorBlinking": "smooth",  // Smooth cursor animation
+  "editor.cursorStyle": "line",  // Line cursor (you can switch to block or underline if preferred)
+  "editor.mouseWheelZoom": true,  // Enable zooming by holding `Ctrl` or `Cmd` and scrolling
+
+  // Git and source control settings
+  "git.enableSmartCommit": true,  // Enable smart commits
+  "git.autofetch": true,  // Automatically fetch from remotes
+  "git.confirmSync": false,  // Skip confirmation for syncing repositories
+
+  // Extensions and IntelliSense settings
+  "editor.suggestSelection": "first",  // Always select the first suggestion in the IntelliSense list
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": true
+  },
+  "editor.snippetSuggestions": "top",  // Show snippets first in suggestion list
+  "editor.parameterHints": true,  // Show parameter hints in functions
+
+  // Editor appearance (Theme and colors)
+  "workbench.colorTheme": "Default Dark+",
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "scope": "comment",
+        "settings": {
+          "foreground": "#6A9955",  // Light green for comments
+          "fontStyle": "italic"
+        }
+      },
+      {
+        "scope": "keyword",
+        "settings": {
+          "foreground": "#C586C0"  // Purple for keywords
+        }
+      }
+    ]
+  },
+
+  // Performance and file handling
+  "files.autoSave": "onWindowChange",  // Auto-save files when you switch windows
+  "files.exclude": {
+    "**/.git": true,  // Hide .git folder in explorer
+    "**/.DS_Store": true,  // Hide .DS_Store files on macOS
+    "**/node_modules": true  // Hide node_modules folder in explorer
+  },
+  "search.followSymlinks": false,  // Disable following symlinks for search (better performance)
+  "files.autoSaveDelay": 1000,  // Delay auto-save by 1 second
+  
+  // Display settings for clarity and ease of use
+  "editor.renderLineHighlight": "gutter",  // Highlight the line in the gutter only
+  "editor.highlightActiveIndentation": true,  // Highlight the current indentation level
+  "editor.matchBrackets": "always",  // Highlight matching brackets
+  "editor.renderLineNumbers": "on"  // Show line numbers (use "relative" for more flexibility)
+}
