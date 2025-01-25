@@ -1,0 +1,30 @@
+trigger:
+  branches:
+    include:
+      - main  # or any branch that you want to trigger the backup from
+
+pool:
+  vmImage: 'ubuntu-latest'  # or any image you prefer
+
+steps:
+- task: Checkout@1  # Checkout the code from the repository
+
+- script: |
+    echo "Backing up AKS deployment YAML files"
+    mkdir -p backup_folder
+    cp -r $(Build.SourcesDirectory)/**/*.yaml backup_folder/  # Copy all YAML files to a backup folder
+  displayName: 'Backup YAML files'
+
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: 'backup_folder'  # The folder with the YAML files
+    includeRootFolder: false
+    archiveFile: '$(Build.ArtifactStagingDirectory)/aks-backup.zip'  # Name of the zip file artifact
+  displayName: 'Zip backup folder'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: '$(Build.ArtifactStagingDirectory)'  # Path where the zip file is stored
+    artifactName: 'aks-backup'  # Name for the artifact
+    publishLocation: 'Container'
+  displayName: 'Publish Artifact'
