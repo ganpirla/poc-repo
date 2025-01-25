@@ -1,10 +1,10 @@
 trigger:
   branches:
     include:
-      - main  # or any branch that you want to trigger the backup from
+      - main  # or any branch you want to monitor
 
 pool:
-  vmImage: 'ubuntu-latest'  # or any image you prefer
+  vmImage: 'ubuntu-latest'
 
 steps:
 - task: Checkout@1  # Checkout the code from the repository
@@ -15,16 +15,23 @@ steps:
     cp -r $(Build.SourcesDirectory)/**/*.yaml backup_folder/  # Copy all YAML files to a backup folder
   displayName: 'Backup YAML files'
 
+- script: |
+    # Create a timestamp for the backup file name
+    timestamp=$(date +"%Y%m%d-%H%M%S")
+    backupFileName="aks-deployment-backup-prod-${timestamp}.zip"  # Update as necessary for your environment
+    echo "Creating zip file: $backupFileName"
+  displayName: 'Generate Timestamp for Backup File'
+
 - task: ArchiveFiles@2
   inputs:
     rootFolderOrFile: 'backup_folder'  # The folder with the YAML files
     includeRootFolder: false
-    archiveFile: '$(Build.ArtifactStagingDirectory)/aks-backup.zip'  # Name of the zip file artifact
+    archiveFile: '$(Build.ArtifactStagingDirectory)/$(backupFileName)'  # Use the dynamic timestamped file name
   displayName: 'Zip backup folder'
 
 - task: PublishBuildArtifacts@1
   inputs:
     pathToPublish: '$(Build.ArtifactStagingDirectory)'  # Path where the zip file is stored
-    artifactName: 'aks-backup'  # Name for the artifact
+    artifactName: 'aks-backup'  # Artifact name
     publishLocation: 'Container'
   displayName: 'Publish Artifact'
