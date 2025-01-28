@@ -50,3 +50,46 @@ If you're downloading a file using a URL like `https://acs-mirror.azureedge.net/
 
 Does that clear things up? Or is there a specific issue you're running into?
 
+
+If you need to **allow HTTPS traffic** in your network to the URL for file downloads, you should configure your firewall or network security device to allow traffic to the **base domain** (e.g., `acs-mirror.azureedge.net`) on port **443**, which is the standard port for HTTPS.
+
+Here's how you can approach it:
+
+### 1. **Allow the Base Domain (e.g., `acs-mirror.azureedge.net`)**
+   You should allow traffic to the **fully qualified domain name (FQDN)**:  
+   `acs-mirror.azureedge.net`
+
+   - Since the domain will resolve to a dynamic set of IPs (due to the CDN nature, such as Akamai), you should allow the domain itself rather than a specific IP address.
+   - The DNS will resolve to different IP addresses over time, depending on network conditions and load balancing, so restricting to IPs might not be reliable.
+
+### 2. **Allow Port 443 (HTTPS)**
+   - Ensure that your firewall allows outbound **HTTPS traffic** (port 443) to `acs-mirror.azureedge.net`.
+   
+### 3. **Optional: Allow Related Domains**
+   If you want to be more thorough, you may also need to allow other domains in the CNAME chain. For example:
+   - `acs-mirror.trafficmanager.net`
+   - `acs-mirror.azureedge.net.edgesuite.net`
+   - `a434.d.akamai.net`
+   
+   While these CNAMEs can point to different IPs, it’s usually more efficient to simply allow the base domain (`acs-mirror.azureedge.net`), as that will handle the redirection through DNS.
+
+### 4. **DNS Resolution (Optional)**
+   If your firewall can perform DNS filtering, you might configure it to specifically resolve and allow the domain name `acs-mirror.azureedge.net`. This way, the firewall will resolve the domain and ensure that the associated IP addresses are accessible.
+
+### 5. **Considerations for CDN-based URLs**
+   Since Akamai and Azure use CDNs, the actual IP addresses may change, and there may be regional differences in the IPs you are accessing. That’s why allowing the **domain** rather than specific IPs is a more reliable method.
+
+---
+
+### Practical Steps
+
+1. **Allow DNS Resolution for `acs-mirror.azureedge.net`**:
+   Ensure your network allows DNS resolution for `acs-mirror.azureedge.net`.
+
+2. **Allow HTTPS (Port 443) for the Domain**:
+   Configure your firewall to allow HTTPS (port 443) to `acs-mirror.azureedge.net` (and optionally related domains if needed).
+
+3. **Test the Configuration**:
+   After allowing the domain and port, test by attempting to download the file or access the URL. Make sure there are no issues with the connection.
+
+Would you like more detailed instructions on setting this up for a specific firewall or network device, or is this general overview enough?
