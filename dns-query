@@ -28,4 +28,25 @@ It looks like you're showing the result of a DNS query, likely for the domain `a
 This likely represents the content delivery network (CDN) used by the service for faster content delivery (in this case, Akamai). Akamai is a global CDN provider, and the DNS query has resolved the domain to a specific set of IP addresses hosted on their network.
 
 Is there something specific you want to know or troubleshoot about this DNS query?  
-  
+
+
+To download files, you generally do **not** need to worry about using the **final A record** or **CNAMEs** directly. Here's why:
+
+1. **DNS Resolution**:  
+   When you make a request to download a file (e.g., `acs-mirror.azureedge.net`), your computer or server will automatically resolve the domain name (like `acs-mirror.azureedge.net`) to an IP address using DNS. This means it will follow the chain of CNAME records to the final A record (IP address), and then it will connect to the server using that IP address.
+
+2. **CNAMEs**:  
+   CNAMEs (Canonical Name records) are just aliases, so if you provide `acs-mirror.azureedge.net`, DNS will resolve it for you to the correct final destination (the A record). You don’t need to manually handle or use CNAMEs when downloading; the DNS system automatically does that for you.
+
+3. **Final A Records**:  
+   The A records are the actual IP addresses where the content is hosted. These are the IPs your system will connect to after DNS resolution. When you access the domain, your browser or download tool will use the resolved IP address to reach the server, not necessarily the CNAME directly.
+
+### Summary
+- **Use the domain name** (`acs-mirror.azureedge.net`) for your download URL.
+- Your system will automatically resolve this to the **A record** (IP address) through DNS.
+- You **don’t need to manually use the CNAME or final A record** — the system does that for you when you initiate the download.
+
+If you're downloading a file using a URL like `https://acs-mirror.azureedge.net/somefile.zip`, the DNS resolution happens in the background to resolve that domain to the right IP. You just need to use the domain, and the rest is handled automatically.
+
+Does that clear things up? Or is there a specific issue you're running into?
+
