@@ -1,0 +1,79 @@
+{
+  "workbench.iconTheme": "material-icon-theme",
+  "editor.fontLigatures": true,
+  "editor.formatOnSave": true,
+  "editor.formatOnType": true,
+  "editor.formatOnPaste": true,
+  "window.zoomLevel": 2,
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "javascript.format.semicolons": "remove", //remove semicolon in ts
+  "typescript.format.semicolons": "remove", //remove semicolon in js
+
+  //custom vscode css
+  "customizeUI.font.regular": "Inter V",
+  "customizeUI.font.monospace": "Rec Mono Duotone",
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "terminal.integrated.fontFamily": "Firacode NF",
+  "react-native-tools.showUserTips": false,
+  "javascript.validate.enable": false,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  // "[typescript]": {
+  //   "editor.defaultFormatter": "esbenp.prettier-vscode"
+  // },
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "editor.cursorSmoothCaretAnimation": true,
+  "editor.cursorBlinking": "phase",
+  "explorer.confirmDragAndDrop": false,
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "editor.guides.bracketPairs": "active",
+  "editor.bracketPairColorization.enabled": true,
+  "editor.linkedEditing": true,
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features"
+  },
+  "liveServer.settings.donotShowInfoMsg": true,
+  "jshint.enable": false,
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "editor.inlineSuggest.enabled": true,
+  "prettier.useEditorConfig": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "eslint.validate": ["javascript"],
+  "[vue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "powershell.powerShellDefaultVersion": "Windows PowerShell (x64)",
+  "workbench.colorTheme": "underdark-jungle",
+  "diffEditor.codeLens": true,
+  "workbench.colorCustomizations": {},
+  "editor.fontFamily": "Rec Mono Duotone, monospace",
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "name": "italic font",
+        "scope": ["comment", "storage", "entity.other"],
+        "settings": {
+          "fontStyle": "italic"
+        }
+      }
+    ]
+  },
+  "editor.fontWeight": "300",
+  "workbench.productIconTheme": "icons-carbon",
+  "[scss]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}
