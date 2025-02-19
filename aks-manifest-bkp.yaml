@@ -145,6 +145,73 @@ steps:
         echo -e "\n---\n" >> ${{ variables.backupFile }}
       done
 
+
+      =========
+
+trigger:
+  branches:
+    include:
+      - main  # or any branch you prefer
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  namespace: 'your-namespace'
+  backupFile: 'k8s-backup.yaml'  # Use YAML since we're saving individual resource YAMLs
+
+steps:
+- task: UseAzureCLI@2
+  inputs:
+    azureSubscription: 'your-azure-service-connection'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      echo "Starting AKS backup process..."
+
+      # Login to Azure and configure kubectl to use the AKS cluster
+      az aks get-credentials --resource-group your-resource-group --name your-aks-cluster
+
+      # Define the resources to be backed up
+      resources=("configmap" "secret" "deployment" "service" "ingress")
+
+      # Initialize backup file
+      > ${{ variables.backupFile }}
+
+      # Loop through resources
+      for resource in "${resources[@]}"; do
+        if [ "$resource" == "configmap" ]; then
+          # Use describe for configmap, loop through each individual configmap
+          echo "Backing up $resource resources..."
+
+          # Loop through each ConfigMap in the namespace
+          kubectl get $resource -n ${{ variables.namespace }} -o name | while read -r resource_name; do
+            echo "Backing up $resource_name..."
+            kubectl describe $resource $resource_name -n ${{ variables.namespace }} >> ${{ variables.backupFile }}
+            
+            # Add separator between individual resource descriptions
+            echo -e "\n---\n" >> ${{ variables.backupFile }}
+          done
+
+        else
+          # Use get for other resources, loop through each individual resource
+          echo "Backing up $resource resources..."
+
+          # Loop through each resource in the namespace and output YAML
+          kubectl get $resource -n ${{ variables.namespace }} -o name | while read -r resource_name; do
+            echo "Backing up $resource_name..."
+            kubectl get $resource $resource_name -n ${{ variables.namespace }} -o yaml >> ${{ variables.backupFile }}
+            
+            # Add separator between individual resource YAMLs
+            echo -e "\n---\n" >> ${{ variables.backupFile }}
+          done
+        fi
+      done
+
+      echo "Backup completed and saved to ${{ variables.backupFile }}."
+  displayName: 'Backup AKS Resources (Describe ConfigMap, Get Other Resources)'
+      
+
       echo "Backup completed and saved to ${{ variables.backupFile }}."
   displayName: 'Backup AKS Resources (Describe ConfigMap, Get Other Resources)'
 
