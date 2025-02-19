@@ -94,3 +94,57 @@ This step will publish the `k8s-backup.yaml` file as an artifact, which you can 
 This pipeline will back up the Kubernetes resources from your AKS cluster into a single YAML file. You can modify it further by adjusting the resources you wish to back up or adding additional steps, such as publishing the backup to Azure Blob Storage or sending notifications after completion.
 
 Let me know if you need further clarification or adjustments!
+
+
+===========
+
+
+trigger:
+  branches:
+    include:
+      - main  # or any branch you prefer
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  namespace: 'your-namespace'
+  backupFile: 'k8s-backup.txt'  # Since describe is more human-readable, a text file is suitable
+
+steps:
+- task: UseAzureCLI@2
+  inputs:
+    azureSubscription: 'your-azure-service-connection'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      echo "Starting AKS backup process..."
+
+      # Login to Azure and configure kubectl to use the AKS cluster
+      az aks get-credentials --resource-group your-resource-group --name your-aks-cluster
+
+      # Define the resources to be backed up
+      resources=("configmap" "secret" "deployment" "service" "ingress")
+
+      # Initialize the backup file
+      > ${{ variables.backupFile }}
+
+      # Loop through resources
+      for resource in "${resources[@]}"; do
+        if [ "$resource" == "configmap" ]; then
+          # Use describe for configmap
+          echo "Backing up $resource resources..."
+          kubectl describe $resource -n ${{ variables.namespace }} >> ${{ variables.backupFile }}
+        else
+          # Use get for other resources
+          echo "Backing up $resource resources..."
+          kubectl get $resource -n ${{ variables.namespace }} -o yaml >> ${{ variables.backupFile }}
+        fi
+        
+        # Add a separator for clarity between different resource descriptions
+        echo -e "\n---\n" >> ${{ variables.backupFile }}
+      done
+
+      echo "Backup completed and saved to ${{ variables.backupFile }}."
+  displayName: 'Backup AKS Resources (Describe ConfigMap, Get Other Resources)'
+
