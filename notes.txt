@@ -1,0 +1,20 @@
+How This Affects the Failover and Health Check Process:
+Pod Shutdown (Termination Process):
+When the pod in eastus2 is terminating (due to the TerminationGracePeriodSeconds set to 30 seconds), the application might still be responding to health checks for the first 15 seconds of the termination process.
+After 15 seconds, the application will likely stop responding to the health checks, causing the iDNS system to detect a failure and mark the pod as unhealthy after just 1 failed health check (due to the negative poll threshold of 1).
+Failover to westus2:
+Once the eastus2 pod is marked unhealthy, iDNS will immediately reroute traffic to the westus2 pod (assuming westus2 is healthy and passing its own health checks).
+Since the poll interval is 15 seconds, it should take only 15 seconds for iDNS to detect the failure and redirect traffic, which is fast and responsive.
+Recovery:
+If the pod in eastus2 becomes healthy again (for example, once the termination process finishes and it becomes available again), iDNS will check its health at the next 15-second interval.
+If the pod starts responding to health checks again, it will be marked healthy after 1 successful health check (due to the positive poll threshold of 1).
+At that point, traffic will start routing back to eastus2, assuming everything is healthy and ready.
+
+
+
+With this configuration, the failover should happen almost immediately:
+
+The negative poll threshold of 1 means that after one failed health check (which should happen within 15 seconds of the pod starting to shut down), the pod will be marked as unhealthy, and iDNS will reroute traffic.
+The positive poll threshold of 1 means that after one successful health check (when the pod is available again), traffic will be sent back to the eastus2 pod.
+15-second poll interval ensures the health check is frequent enough to detect failures and reroute traffic quickly, making the failover very responsive.
+
