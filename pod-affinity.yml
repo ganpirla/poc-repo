@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dp1
+spec:
+  replicas: 15
+  selector:
+    matchLabels:
+      app: dp1
+  template:
+    metadata:
+      labels:
+        app: dp1
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: dp1
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+        - name: dp1-container
+          image: dp1-image
