@@ -1,0 +1,96 @@
+The issue you're describing, where traffic continues to route to `abc-eastsu2.pirla.com` even after services are stopped, is likely due to a combination of factors related to DNS TTL, load balancer behavior, and connection caching mechanisms. Here's a breakdown of why this might be happening:
+
+### 1. **DNS Caching at the Client Side**:
+   - Even though the TTL (Time to Live) for DNS resolution is set to a minimum of 15 seconds, many DNS resolvers (including browsers and applications) cache DNS records for longer than the TTL specified. Some resolvers may hold on to the previous IP addresses for longer than expected, which can result in traffic still being sent to the old IP address (`abc-eastsu2.pirla.com`) even after it should have failed over to `abc-westsu2.pirla.com`.
+
+   - If the DNS client (or resolver) doesn’t immediately refresh the DNS record due to caching or DNS resolver behavior, it might continue using the stale address (`abc-eastsu2.pirla.com`) until the cache expires.
+
+### 2. **DNS Propagation Delay**:
+   - iDNS URL failover is dependent on DNS updates being propagated. Even though DNS records might have been updated to reflect the new active IP address, there's still a propagation delay due to the nature of DNS resolution across multiple layers (from your application to edge resolvers and clients).
+   
+   - This delay in propagation can cause clients to continue hitting the old IP address (`abc-eastsu2.pirla.com`) for a period of time even after the services have been stopped at that endpoint.
+
+### 3. **LGW Load Balancer Timeout Setting**:
+   - The load balancer (LGW) has a `connection timeout` set to 60,000 milliseconds (60 seconds), which means that the LGW will wait up to 60 seconds for a connection to be established with the upstream (i.e., `abc-eastsu2.pirla.com`).
+   
+   - If traffic is still being routed to `abc-eastsu2.pirla.com` during the failover process, the load balancer may be attempting to connect to that server for the full timeout period (60 seconds). If the service is unavailable, the connection attempt will eventually fail, and the load balancer will switch to `abc-westsu2.pirla.com`, but this transition could take time based on how quickly the LGW detects and handles failures.
+
+### 4. **Connection Reuse**:
+   - Many applications and load balancers reuse existing TCP connections. If a connection has already been established to `abc-eastsu2.pirla.com`, the connection may not be closed immediately, and traffic can continue to be routed to that server even if it's not actually functional.
+   
+   - This reuse of established connections can cause traffic to continue flowing to the old endpoint until those connections are eventually closed (e.g., after the timeout or reset).
+
+### 5. **DNS Resolution and Load Balancer Configuration**:
+   - Load balancers typically perform health checks to determine whether a backend server is healthy. However, if the health check mechanism is slow to detect the failure of `abc-eastsu2.pirla.com`, or if there is a delay in marking that server as "unhealthy," the load balancer may continue routing traffic to it until the failure is recognized and acted upon.
+
+   - Ensure that the health checks are properly configured with short time intervals to quickly detect when a backend is down, and that the DNS TTL is sufficiently low to facilitate faster failover.
+
+### Recommendations:
+1. **DNS TTL Consideration**: If you're seeing traffic still hitting `abc-eastsu2.pirla.com` for 5-10 minutes, it’s possible that DNS resolvers are caching the old record for longer than intended. While you have a low TTL, ensure that your DNS setup supports quick updates across the whole network.
+   
+2. **Health Check and Load Balancer Configuration**: Review the health check configuration on the load balancer and adjust it if necessary to detect failures more quickly. Reducing the connection timeout period (below 60 seconds) and ensuring that the load balancer is configured for quick failover could help speed up the response time.
+
+3. **Connection Close and Reuse**: Ensure that the connections to the backend servers are closed correctly when a failover occurs. This may involve reviewing connection reuse settings and ensuring proper cleanup during failover events.
+
+4. **Check Resolver Caching**: If you're able to control the DNS resolvers, check if they are aggressively caching the IP addresses and consider instructing them to refresh more frequently during failover scenarios.
+
+In conclusion, the main reason for the delay seems to be the interaction between DNS TTL, connection reuse, and load balancer configuration. By optimizing these elements, you should be able to reduce the failover time and ensure traffic is routed to the healthy backend server more quickly.
+
+
+
+
+
+
+-----
+
+
+Thank you for the clarification! Since the **LGW (Load Balancer Gateway)** is just using `abc.pirla.com` as the upstream host, and the DNS resolution happens at the **iDNS level**, we need to focus on how **DNS resolution** and **failover handling** at the iDNS level interact with the **LGW** and why it still routes traffic to `abc-eastsu2.pirla.com` even after you’ve stopped services there.
+
+Let's go over the relevant factors more precisely in this context:
+
+### Key Points:
+1. **LGW Usage of `abc.pirla.com`**: 
+   - The LGW is configured with `abc.pirla.com` as the upstream host. This means the LGW resolves `abc.pirla.com` to either `abc-eastsu2.pirla.com` or `abc-westsu2.pirla.com` (depending on the health and DNS feedback from iDNS).
+   - iDNS is managing the failover by providing different IP addresses based on health status. If `abc-eastsu2.pirla.com` is down, iDNS should resolve `abc.pirla.com` to `abc-westsu2.pirla.com`.
+
+2. **DNS Failover Mechanism**: 
+   - Since iDNS uses **active-active groups** for failover, it means that when one of the servers (`abc-eastsu2.pirla.com`) is marked unhealthy, iDNS should immediately adjust the DNS response to point to `abc-westsu2.pirla.com`.
+   - With a TTL set to 15 seconds, clients (like your LGW) should be resolving `abc.pirla.com` to the healthy IP address every 15 seconds, assuming the DNS cache is being cleared properly on the LGW side.
+
+3. **DNS Resolution Caching at LGW**: 
+   - The issue likely stems from **DNS caching behavior** at the LGW. If the LGW is caching the resolved IP address for longer than expected, it might continue trying to send traffic to the old IP address (`abc-eastsu2.pirla.com`) for a longer period, even after iDNS has resolved to the healthy server (`abc-westsu2.pirla.com`).
+   
+   - Some devices (like load balancers or proxies) cache DNS responses for a longer period than the TTL specified, potentially due to internal settings or defaults. If your LGW is doing this, it might be holding onto the IP of `abc-eastsu2.pirla.com` even if iDNS has already updated the resolution to `abc-westsu2.pirla.com`.
+
+4. **DNS Resolution at the iDNS Level**: 
+   - If the DNS resolution at the **iDNS level** is properly configured with a short TTL and the health check triggers correctly, iDNS should quickly stop resolving `abc.pirla.com` to `abc-eastsu2.pirla.com` and instead resolve it to `abc-westsu2.pirla.com`. 
+   - However, if the LGW is not properly refreshing its DNS lookup, it might continue attempting to connect to `abc-eastsu2.pirla.com` for several minutes until the cached DNS entry expires, despite the fact that iDNS is already directing traffic to the other server.
+
+### Possible Reasons for the Delay:
+1. **DNS Cache Timeout in the LGW**: 
+   - The LGW might have a **longer DNS cache timeout** than the DNS TTL set by iDNS. This means that even if iDNS changes the resolution to a new IP address, the LGW might continue using the old IP address from its cache, causing traffic to be sent to `abc-eastsu2.pirla.com` for a period of time until the cache expires.
+
+2. **Health Check Lag**: 
+   - If the iDNS health check mechanism is delayed in detecting the failure of `abc-eastsu2.pirla.com`, it might continue resolving `abc.pirla.com` to `abc-eastsu2.pirla.com` even after the services are stopped, causing continued traffic flow to the down server. Ensure that health checks are happening as expected and that the failover mechanism is triggered immediately when `abc-eastsu2.pirla.com` is unavailable.
+
+3. **DNS Propagation Delay**: 
+   - DNS updates may not be immediately propagated across the entire system, especially if there are multiple layers of caching or if DNS resolvers (e.g., at the LGW or intermediate servers) have cached old entries longer than the TTL. The `5-10 minute` delay you're observing could be caused by this propagation delay.
+
+### What You Can Check or Do:
+1. **Check DNS Caching Behavior at the LGW**:
+   - Look into how your LGW handles DNS resolution and caching. Ensure it respects the TTL set by iDNS and doesn't cache the resolved DNS addresses for too long.
+   - Some load balancers allow configuring DNS cache expiration times, so you may be able to reduce this value to ensure faster failover.
+
+2. **Verify Health Check Configuration**:
+   - Ensure that the **health checks** at the iDNS level are properly detecting the status of `abc-eastsu2.pirla.com`. They should be frequent and quick enough to trigger failover actions without significant delay.
+   - Double-check that the health check configuration at both the iDNS level and the LGW level is functioning as expected to quickly detect failures.
+
+3. **Force DNS Cache Refresh at LGW**:
+   - If the LGW supports it, try forcing a **DNS cache refresh** when you stop the service on `abc-eastsu2.pirla.com`. This can be done either manually or through configuration settings to force it to resolve DNS again and update the IP address faster.
+
+4. **Testing**:
+   - Test the behavior of the failover by intentionally stopping services and observing the DNS resolution at the LGW. Use tools like `dig` or `nslookup` from the LGW's perspective to check how quickly the DNS resolution is updating.
+   - Check the **DNS response** for `abc.pirla.com` before and after stopping the services to ensure that the failover happens as expected.
+
+### Conclusion:
+The **5-10 minute delay** you're seeing is likely due to **DNS caching** at the LGW level. Even with a short TTL at the iDNS level, the LGW may be holding onto the stale DNS records and continuing to route traffic to `abc-eastsu2.pirla.com` until the cache expires. You can mitigate this by configuring the LGW to respect TTL settings more closely and possibly forcing quicker DNS resolution refreshes.''
