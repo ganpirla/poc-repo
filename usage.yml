@@ -100,3 +100,54 @@ kubectl top pods -n $NAMESPACE --no-headers | while read line; do
   echo "$POD_NAME | $POD_CPU_USAGE | $POD_MEMORY_USAGE | $CPU_PERCENTAGE% | $MEMORY_PERCENTAGE%"
 done
 
+=======
+
+
+
+#!/bin/bash
+
+# Set the namespace to query, default to 'default' if not provided
+NAMESPACE=${1:-default}
+
+# Print the header for the output
+echo "Pod Name | CPU Usage (millicores) | Memory Usage (Mi) | CPU Usage (%) | Memory Usage (%)"
+echo "---------------------------------------------------------------"
+
+# Get the CPU and memory usage for each pod in the given namespace
+kubectl top pods -n $NAMESPACE --no-headers | while read line; do
+  # Extract pod name, CPU usage, and memory usage from the output
+  POD_NAME=$(echo $line | awk '{print $1}')
+  POD_CPU_USAGE=$(echo $line | awk '{print $2}')   # in millicores
+  POD_MEMORY_USAGE=$(echo $line | awk '{print $3}')  # in Mi
+  
+  # Remove 'm' from the CPU usage (if it's in millicores) for calculation
+  POD_CPU_USAGE_RAW=$(echo $POD_CPU_USAGE | sed 's/m//')
+
+  # Get the resource requests for the pod
+  POD_CPU_REQUEST=$(kubectl get pod $POD_NAME -n $NAMESPACE -o=jsonpath='{.spec.containers[0].resources.requests.cpu}' | sed 's/m//')
+  POD_MEMORY_REQUEST=$(kubectl get pod $POD_NAME -n $NAMESPACE -o=jsonpath='{.spec.containers[0].resources.requests.memory}')
+
+  # If memory request is in Gi (e.g., "1Gi"), convert it to Mi
+  if [[ $POD_MEMORY_REQUEST == *Gi ]]; then
+    POD_MEMORY_REQUEST_MI=$(echo $POD_MEMORY_REQUEST | sed 's/Gi//')  # Get numeric value
+    POD_MEMORY_REQUEST_MI=$((POD_MEMORY_REQUEST_MI * 1024))  # Convert Gi to Mi
+  else
+    # If the memory request is already in Mi, use it directly
+    POD_MEMORY_REQUEST_MI=$(echo $POD_MEMORY_REQUEST | sed 's/Mi//')
+  fi
+
+  # Validate that the CPU and memory usage are numeric before performing calculations
+  if ! [[ "$POD_CPU_USAGE_RAW" =~ ^[0-9]+$ ]] || ! [[ "$POD_MEMORY_USAGE" =~ ^[0-9]+$ ]] || ! [[ "$POD_CPU_REQUEST" =~ ^[0-9]+$ ]] || ! [[ "$POD_MEMORY_REQUEST_MI" =~ ^[0-9]+$ ]]; then
+    echo "Error: Invalid CPU or Memory usage for pod $POD_NAME."
+    continue
+  fi
+
+  # Calculate CPU and Memory usage percentage based on requests
+  CPU_PERCENTAGE=$(awk "BEGIN {print ($POD_CPU_USAGE_RAW/$POD_CPU_REQUEST)*100}")
+  MEMORY_PERCENTAGE=$(awk "BEGIN {print ($POD_MEMORY_USAGE/$POD_MEMORY_REQUEST_MI)*100}")
+
+  # Print the pod name with its CPU and Memory usage (raw values and percentages)
+  echo "$POD_NAME | $POD_CPU_USAGE | $POD_MEMORY_USAGE | $CPU_PERCENTAGE% | $MEMORY_PERCENTAGE%"
+done
+
+
