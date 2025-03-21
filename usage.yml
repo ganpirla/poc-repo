@@ -1,0 +1,61 @@
+trigger:
+- main  # Trigger the pipeline on changes to the main branch (adjust as needed)
+
+pr:
+- main  # Trigger on pull requests (optional)
+
+variables:
+  kubernetesCluster: '<your-aks-cluster-name>'
+  kubernetesResourceGroup: '<your-resource-group>'
+  kubernetesNamespace: 'default'  # or change to a specific namespace
+  azureSubscription: '<your-azure-subscription-name>'
+
+stages:
+  - stage: MonitorPodResources
+    jobs:
+      - job: Monitor
+        displayName: 'Monitor Pod Resource Usage'
+        pool:
+          vmImage: 'ubuntu-latest'  # or choose your preferred image
+        steps:
+          - task: UseAzureCLI@2
+            inputs:
+              azureSubscription: $(azureSubscription)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                echo "Setting up kubectl for AKS cluster..."
+
+                # Install kubectl if not already installed
+                curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+                chmod +x ./kubectl
+                sudo mv ./kubectl /usr/local/bin/kubectl
+
+                # Connect to AKS cluster using Azure CLI
+                az aks get-credentials --resource-group $(kubernetesResourceGroup) --name $(kubernetesCluster)
+
+                # Fetch the total CPU and memory available in the cluster
+                TOTAL_CPU=$(kubectl top nodes --no-headers | awk '{sum+=$3} END {print sum}')
+                TOTAL_MEMORY=$(kubectl top nodes --no-headers | awk '{sum+=$5} END {print sum}' | sed 's/Mi//')
+
+                # Print the header for the output
+                echo "Pod Name | CPU Usage (millicores) | Memory Usage (Mi) | CPU Usage (%) | Memory Usage (%)"
+                echo "---------------------------------------------------------------"
+
+                # Get the CPU and memory usage for each pod in the given namespace
+                kubectl top pods -n $(kubernetesNamespace) --no-headers | while read line; do
+                  POD_NAME=$(echo $line | awk '{print $1}')
+                  POD_CPU_USAGE=$(echo $line | awk '{print $2}')   # in millicores
+                  POD_MEMORY_USAGE=$(echo $line | awk '{print $3}')  # in Mi
+                  
+                  # Remove 'm' from the CPU usage (if it's in millicores) for calculation
+                  POD_CPU_USAGE_RAW=$(echo $POD_CPU_USAGE | sed 's/m//')
+
+                  # Calculate CPU and Memory usage percentage
+                  CPU_PERCENTAGE=$(echo "scale=2; $POD_CPU_USAGE_RAW/$TOTAL_CPU*100" | bc)
+                  MEMORY_PERCENTAGE=$(echo "scale=2; $POD_MEMORY_USAGE/$TOTAL_MEMORY*100" | bc)
+
+                  # Print the pod name with its CPU and Memory usage (raw values and percentages)
+                  echo "$POD_NAME | $POD_CPU_USAGE | $POD_MEMORY_USAGE | $CPU_PERCENTAGE% | $MEMORY_PERCENTAGE%"
+                done
+            displayName: 'Monitor Resource Usage of Pods'
