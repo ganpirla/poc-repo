@@ -59,3 +59,44 @@ stages:
                   echo "$POD_NAME | $POD_CPU_USAGE | $POD_MEMORY_USAGE | $CPU_PERCENTAGE% | $MEMORY_PERCENTAGE%"
                 done
             displayName: 'Monitor Resource Usage of Pods'
+
+
+====
+
+#!/bin/bash
+
+# Set the namespace to query, default to 'default' if not provided
+NAMESPACE=${1:-default}
+
+# Print the header for the output
+echo "Pod Name | CPU Usage (millicores) | Memory Usage (Mi) | CPU Usage (%) | Memory Usage (%)"
+echo "---------------------------------------------------------------"
+
+# Get the CPU and memory usage for each pod in the given namespace
+kubectl top pods -n $NAMESPACE --no-headers | while read line; do
+  # Extract pod name, CPU usage, and memory usage from the output
+  POD_NAME=$(echo $line | awk '{print $1}')
+  POD_CPU_USAGE=$(echo $line | awk '{print $2}')   # in millicores
+  POD_MEMORY_USAGE=$(echo $line | awk '{print $3}')  # in Mi
+  
+  # Remove 'm' from the CPU usage (if it's in millicores) for calculation
+  POD_CPU_USAGE_RAW=$(echo $POD_CPU_USAGE | sed 's/m//')
+
+  # Get the resource requests and limits for the pod
+  POD_CPU_REQUEST=$(kubectl get pod $POD_NAME -n $NAMESPACE -o=jsonpath='{.spec.containers[0].resources.requests.cpu}' | sed 's/m//')
+  POD_MEMORY_REQUEST=$(kubectl get pod $POD_NAME -n $NAMESPACE -o=jsonpath='{.spec.containers[0].resources.requests.memory}' | sed 's/Mi//')
+
+  # Validate that the CPU and memory usage are numeric before performing calculations
+  if ! [[ "$POD_CPU_USAGE_RAW" =~ ^[0-9]+$ ]] || ! [[ "$POD_MEMORY_USAGE" =~ ^[0-9]+$ ]] || ! [[ "$POD_CPU_REQUEST" =~ ^[0-9]+$ ]] || ! [[ "$POD_MEMORY_REQUEST" =~ ^[0-9]+$ ]]; then
+    echo "Error: Invalid CPU or Memory usage for pod $POD_NAME."
+    continue
+  fi
+
+  # Calculate CPU and Memory usage percentage based on requests
+  CPU_PERCENTAGE=$(awk "BEGIN {print ($POD_CPU_USAGE_RAW/$POD_CPU_REQUEST)*100}")
+  MEMORY_PERCENTAGE=$(awk "BEGIN {print ($POD_MEMORY_USAGE/$POD_MEMORY_REQUEST)*100}")
+
+  # Print the pod name with its CPU and Memory usage (raw values and percentages)
+  echo "$POD_NAME | $POD_CPU_USAGE | $POD_MEMORY_USAGE | $CPU_PERCENTAGE% | $MEMORY_PERCENTAGE%"
+done
+
