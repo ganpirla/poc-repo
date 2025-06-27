@@ -1,3 +1,19 @@
 seq 5000 | xargs -n1 -P20 -I{} curl -s -X POST https://api.example.com/endpoint \
   -H "Content-Type: application/json" \
   -d '{"key1":"value1", "key2":"value2"}'
+
+seq 5000 | xargs -n1 -P20 -I{} curl -s -o /dev/null -w "RTT: %{time_total}s\n" -X POST https://api.example.com/endpoint \
+  -H "Content-Type: application/json" \
+  -d '{"key1":"value1", "key2":"value2"}'
+
+
+seq 5000 | xargs -n1 -P20 -I{} curl -s -o /dev/null -w "%{time_total}\n" -X POST https://api.example.com/endpoint \
+  -H "Content-Type: application/json" \
+  -d '{"key1":"value1", "key2":"value2"}' >> rtt_results.txt
+
+
+awk '{ total += $1; count++ } END { print "Average RTT:", total/count, "seconds" }' rtt_results.txt
+
+sort -nr rtt_results.txt | head -10
+
+
