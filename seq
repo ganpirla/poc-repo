@@ -16,4 +16,20 @@ awk '{ total += $1; count++ } END { print "Average RTT:", total/count, "seconds"
 
 sort -nr rtt_results.txt | head -10
 
+==
+
+
+#!/bin/bash
+
+> rtt_log.txt  # clear log file
+
+seq 5000 | xargs -n1 -P20 -I{} bash -c '
+  result=$(curl -s -o /dev/null -w "%{time_total} %{http_code}\n" -X POST https://api.example.com/endpoint \
+    -H "Content-Type: application/json" \
+    -d "{\"key1\":\"value1\", \"key2\":\"value2\"}")
+  echo "$result" >> rtt_log.txt
+'
+
+# Calculate average RTT
+awk '{ total += $1; count++ } END { print "Average RTT:", total/count, "seconds"; print "Total calls:", count }' rtt_log.txt
 
