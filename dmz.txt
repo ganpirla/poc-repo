@@ -1,0 +1,6 @@
+    ProxyPreserveHost On
+    ProxyPass /app/ http://internal-server:12006/app/
+    ProxyPassReverse /app/ http://internal-server:12006/app/
+
+    RequestHeader set X-Forwarded-Proto "https"
+    RequestHeader set X-Forwarded-Port "443"
