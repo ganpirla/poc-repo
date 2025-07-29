@@ -1,6 +1,10 @@
 # Green prompt
 PS1='\[\e[0;32m\][\u@\h \W]\$\[\e[0m\] '
+PS1='\[\e[0;32m\](NPRD) [\u@\h \W]\$\[\e[0m\] '
+
 
 
 # Red prompt
 PS1='\[\e[0;31m\][\u@\h \W]\$\[\e[0m\] '
+PS1='\[\e[0;31m\](PROD) [\u@\h \W]\$\[\e[0m\] '
+
