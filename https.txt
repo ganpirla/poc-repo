@@ -1,10 +1,21 @@
 #!/bin/bash
 
-# Array of URLs to check
-URLS=("https://server1.example.com" "https://server2.example.com" "https://server3.example.com")
+# Path to the file containing the list of URLs
+URL_FILE="urls.txt"
 
-# Loop through each URL
-for URL in "${URLS[@]}"; do
+# Check if the file exists
+if [ ! -f "$URL_FILE" ]; then
+  echo "URL file not found: $URL_FILE"
+  exit 1
+fi
+
+# Loop through each URL in the file
+while IFS= read -r URL; do
+  # Skip empty lines or comments
+  if [[ -z "$URL" || "$URL" == \#* ]]; then
+    continue
+  fi
+
   # Perform a curl request and capture the HTTP status code
   HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
 
@@ -14,4 +25,4 @@ for URL in "${URLS[@]}"; do
   else
     echo "Health check failed for $URL! Status code: $HTTP_STATUS"
   fi
-done
+done < "$URL_FILE"
