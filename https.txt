@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Array of URLs to check
+URLS=("https://server1.example.com" "https://server2.example.com" "https://server3.example.com")
+
+# Loop through each URL
+for URL in "${URLS[@]}"; do
+  # Perform a curl request and capture the HTTP status code
+  HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+
+  # Check if the status code is 200
+  if [ "$HTTP_STATUS" -eq 200 ]; then
+    echo "Health check successful for $URL! Status code: 200"
+  else
+    echo "Health check failed for $URL! Status code: $HTTP_STATUS"
+  fi
+done
