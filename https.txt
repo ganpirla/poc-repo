@@ -1,28 +1,60 @@
 #!/bin/bash
 
-# Path to the file containing the list of URLs
+# File with list of URLs
 URL_FILE="urls.txt"
 
-# Check if the file exists
+# Email settings
+SMTP_SERVER="smtp.yourmailserver.com"
+SENDER="monitor@example.com"
+RECIPIENT="admin@example.com"
+
+# Email subjects
+ALERT_SUBJECT="Health Check ALERT: Some URLs are DOWN"
+SUMMARY_SUBJECT="Weekly Health Check Summary"
+
+# Track current date
+DAY_OF_WEEK=$(date +%u)  # 1 = Monday
+
+# Check if URL file exists
 if [ ! -f "$URL_FILE" ]; then
   echo "URL file not found: $URL_FILE"
   exit 1
 fi
 
-# Loop through each URL in the file
+# Temp files to build reports
+TMP_ALERT=$(mktemp)
+TMP_SUMMARY=$(mktemp)
+HAS_FAILURE=0
+
+# Process each URL
 while IFS= read -r URL; do
   # Skip empty lines or comments
   if [[ -z "$URL" || "$URL" == \#* ]]; then
     continue
   fi
 
-  # Perform a curl request and capture the HTTP status code
+  # Curl to get status
   HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
 
-  # Check if the status code is 200
-  if [ "$HTTP_STATUS" -eq 200 ]; then
-    echo "Health check successful for $URL! Status code: 200"
-  else
-    echo "Health check failed for $URL! Status code: $HTTP_STATUS"
+  # Add to summary
+  echo "$URL --> $HTTP_STATUS" >> "$TMP_SUMMARY"
+
+  # If not 200, flag and add to alert message
+  if [ "$HTTP_STATUS" -ne 200 ]; then
+    HAS_FAILURE=1
+    echo "$URL --> FAILED (status $HTTP_STATUS)" >> "$TMP_ALERT"
   fi
 done < "$URL_FILE"
+
+# Send alert email if any URL failed
+if [ "$HAS_FAILURE" -eq 1 ]; then
+  mailx -S smtp="$SMTP_SERVER" -r "$SENDER" -s "$ALERT_SUBJECT" "$RECIPIENT" < "$TMP_ALERT"
+fi
+
+# Send summary email every Monday (DAY_OF_WEEK=1)
+if [ "$DAY_OF_WEEK" -eq 1 ]; then
+  mailx -S smtp="$SMTP_SERVER" -r "$SENDER" -s "$SUMMARY_SUBJECT" "$RECIPIENT" < "$TMP_SUMMARY"
+fi
+
+# Cleanup temp files
+rm -f "$TMP_ALERT" "$TMP_SUMMARY"
