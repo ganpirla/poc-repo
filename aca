@@ -1,0 +1,72 @@
+If you're asking why an **Azure Container App** can be reached over **HTTP from inside the container's console (or exec session)** even though external access uses HTTPS, that's expected behavior.
+
+Here's why:
+
+* **Inside the container**, your application typically listens on an HTTP port (for example, `http://localhost:8080`).
+* **Azure Container Apps** terminates TLS (HTTPS) at the ingress layer before forwarding the request to your container.
+* The communication path is generally:
+
+  ```
+  Client
+      │ HTTPS
+      ▼
+  Azure Container Apps Ingress (TLS termination)
+      │ HTTP
+      ▼
+  Your Container (localhost:8080)
+  ```
+
+So if you open a console in the container and run:
+
+```bash
+curl http://localhost:8080
+```
+
+or
+
+```bash
+curl http://127.0.0.1:8080
+```
+
+it works because you're talking directly to your application over the internal HTTP port.
+
+### Why not HTTPS internally?
+
+By default, Azure Container Apps does **not** require your container to serve HTTPS because:
+
+* TLS encryption is handled by the managed ingress.
+* Your application only needs to serve plain HTTP.
+* This reduces certificate management inside your container.
+
+### If calling another Container App
+
+There are two cases:
+
+* **Using the public ingress URL**:
+
+  ```
+  https://myapp.region.azurecontainerapps.io
+  ```
+
+  Use **HTTPS**.
+
+* **Using internal ingress (private Container Apps environment)**:
+  Azure still terminates TLS at the ingress. Depending on your setup, requests forwarded to the target container are HTTP. Your application itself usually doesn't need to implement HTTPS.
+
+### If you're seeing HTTP from the console
+
+For example:
+
+```bash
+curl http://my-api:8080
+```
+
+or
+
+```bash
+curl http://localhost:8080
+```
+
+that's normal because you're bypassing the external ingress and talking directly to the application.
+
+If instead you're referring to **calling another Azure Container App by its internal FQDN** (e.g., `myapp.internal...`) and wondering why HTTP works there, let me know your setup (internal ingress enabled, VNet, and the URL you're using), because the behavior depends on how the apps are configured.
